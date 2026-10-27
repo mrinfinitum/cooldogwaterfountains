@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { swatchColor } from "@/lib/colors";
-import type { ProductImage, ProductVariation } from "@/lib/wordpress";
+import type { ColorOption, ProductImage } from "@/lib/wordpress";
 import { CONTACT } from "@/lib/site";
 import Price from "./Price";
 import { DropIcon, FlagIcon, PhoneIcon, RulerIcon } from "./icons";
@@ -19,21 +19,40 @@ type Props = {
   priceLabel?: string;
   inStock: boolean;
   images: ProductImage[];
-  variations: ProductVariation[];
+  variations: ColorOption[];
   wpUrl: string;
   productId: number;
   children?: ReactNode;
 };
 
-const pickDefault = (variations: ProductVariation[]) =>
+const pickDefault = (variations: ColorOption[]) =>
   variations.find((v) => /standard/i.test(v.color)) ?? variations[0];
+
+// The page's query string (empty while rendering on the server).
+const noSubscribe = () => () => {};
+const useQueryString = () =>
+  useSyncExternalStore(
+    noSubscribe,
+    () => window.location.search,
+    () => "",
+  );
 
 export default function ProductView(props: Props) {
   const { name, sku, series, summary, images, variations, wpUrl, productId, inStock, children } =
     props;
 
-  const [variation, setVariation] = useState(() => pickDefault(variations));
-  const [pickedColor, setPickedColor] = useState(false);
+  // A product card can link here with ?color=… to open on that color.
+  const query = useQueryString();
+  const requested = useMemo(() => {
+    const wanted = new URLSearchParams(query).get("color");
+    return variations.find((v) => v.color === wanted);
+  }, [query, variations]);
+
+  const [chosen, setChosen] = useState<ColorOption | null>(null);
+  const variation = chosen ?? requested ?? pickDefault(variations);
+  const pickedColor = chosen !== null || requested !== undefined;
+  // Color being hovered (or focused): its photo shows until the pointer leaves.
+  const [preview, setPreview] = useState<ColorOption | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
@@ -49,7 +68,8 @@ export default function ProductView(props: Props) {
     return list;
   }, [images, variation, pickedColor]);
 
-  const current = gallery[Math.min(imageIndex, gallery.length - 1)];
+  const current = preview?.image ?? gallery[Math.min(imageIndex, gallery.length - 1)];
+  const shownColor = preview ?? variation;
   const price = variation?.price ?? props.price;
   const regularPrice = variation?.regularPrice ?? props.regularPrice;
 
@@ -65,9 +85,8 @@ export default function ProductView(props: Props) {
     quantity: String(quantity),
   })}`;
 
-  const selectColor = (v: ProductVariation) => {
-    setVariation(v);
-    setPickedColor(true);
+  const selectColor = (v: ColorOption) => {
+    setChosen(v);
     setImageIndex(0);
   };
 
@@ -101,7 +120,7 @@ export default function ProductView(props: Props) {
                     i === imageIndex ? "outline-2 outline-teal" : "opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <Image src={img.src} alt="" fill sizes="96px" className="object-cover" />
+                  <Image src={img.src} alt="" fill sizes="96px" className="object-contain" />
                 </button>
               </li>
             ))}
@@ -126,7 +145,7 @@ export default function ProductView(props: Props) {
           {variations.length > 0 && (
             <fieldset className="mt-8">
               <legend className="eyebrow">
-                Color: <span className="text-teal">{variation?.color}</span>
+                Color: <span className="text-teal">{shownColor?.color}</span>
               </legend>
               <div className="mt-4 flex flex-wrap gap-3">
                 {variations.map((v) => (
@@ -134,6 +153,10 @@ export default function ProductView(props: Props) {
                     key={v.id}
                     type="button"
                     onClick={() => selectColor(v)}
+                    onMouseEnter={() => setPreview(v)}
+                    onMouseLeave={() => setPreview(null)}
+                    onFocus={() => setPreview(v)}
+                    onBlur={() => setPreview(null)}
                     aria-pressed={v.id === variation?.id}
                     aria-label={v.color}
                     title={v.color}

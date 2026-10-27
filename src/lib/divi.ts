@@ -162,3 +162,29 @@ export function renderDivi(html: string): string {
 
   return out;
 }
+
+export type DiviBlurb = {
+  title?: string;
+  image?: string;
+  alt?: string;
+  link?: string;
+  /** Inner text of the blurb (HTML). */
+  content: string;
+};
+
+/** The blurb modules (image + title + short text) on a Divi page, in order. */
+export function diviBlurbs(raw: string): DiviBlurb[] {
+  const html = normalizeQuotes(raw);
+  return [...html.matchAll(/\[et_pb_blurb([^\]]*)\]([\s\S]*?)\[\/et_pb_blurb\]/gi)].map(
+    ([, rawAttrs, content]) => {
+      const a = parseAttrs(rawAttrs);
+      return {
+        title: a.title,
+        image: a.image,
+        alt: a.alt,
+        link: a.link_option_url || a.url,
+        content,
+      };
+    },
+  );
+}

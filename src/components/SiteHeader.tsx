@@ -75,22 +75,24 @@ export default async function SiteHeader() {
                         <Link
                           key={c.slug}
                           href={`/prod-category/${c.slug}/`}
-                          className="group/card relative block aspect-[4/3] overflow-hidden bg-foam"
+                          className="group/card flex gap-5 bg-mist p-4"
                         >
-                          {c.image && (
-                            <Image
-                              src={c.image.src}
-                              alt={c.image.alt}
-                              fill
-                              sizes="400px"
-                              className="object-cover transition duration-500 group-hover/card:scale-105"
-                            />
-                          )}
-                          <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-5 pt-16 text-white">
-                            <span className="headline block text-3xl">
+                          <span className="relative block aspect-square w-40 shrink-0 overflow-hidden">
+                            {c.image && (
+                              <Image
+                                src={c.image.src}
+                                alt={c.image.alt}
+                                fill
+                                sizes="160px"
+                                className="object-contain transition duration-500 group-hover/card:scale-[1.04]"
+                              />
+                            )}
+                          </span>
+                          <span className="flex flex-col justify-center">
+                            <span className="headline block text-3xl group-hover/card:text-teal">
                               {c.name.replace(/^COOL DOG\s+/i, "")}
                             </span>
-                            <span className="eyebrow mt-2 inline-block">Shop Now</span>
+                            <span className="eyebrow mt-3 inline-block text-teal">Shop Now</span>
                           </span>
                         </Link>
                       ))}

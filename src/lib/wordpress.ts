@@ -1,6 +1,8 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { diviHeroImage } from "./divi";
-import { cleanWpHtml, decodeEntities, toPlainText } from "./html";
+import studioPhotos from "@/data/studio-photos.json";
+import { photoMatchesColor } from "./colors";
+import { diviBlurbs, diviHeroImage } from "./divi";
+import { cleanWpHtml, decodeEntities, toLocalHref, toPlainText } from "./html";
 import { WP_URL } from "./site";
 
 /* ------------------------------------------------------------------ */
@@ -26,11 +28,13 @@ export type WpPage = {
 
 export type ProductImage = { src: string; alt: string };
 
-export type ProductVariation = {
+/** One color option of a product (a WooCommerce variation). */
+export type ColorOption = {
   id: number;
   color: string;
   price: number;
   regularPrice: number;
+  /** The fountain photographed in this color (or its paint chip if there is no photo). */
   image?: ProductImage;
 };
 
@@ -49,7 +53,15 @@ export type Product = {
   images: ProductImage[];
   categories: { slug: string; name: string }[];
   colors: string[];
-  variationIds: { id: number; color: string }[];
+  options: ColorOption[];
+};
+
+/** A product-line card from the WordPress homepage ("Shop by fountain"). */
+export type ProductLine = {
+  title: string;
+  subtitle: string;
+  image?: ProductImage;
+  href: string;
 };
 
 export type ProductCategory = {
@@ -105,6 +117,8 @@ type RawProduct = {
   attributes: { name: string; terms: { name: string }[] }[];
   variations: { id: number; attributes: { name: string; value: string }[] }[];
 };
+
+type RawVariation = RawProduct & { parent: number; variation?: string };
 
 type RawCategory = {
   id: number;
@@ -164,10 +178,28 @@ async function fetchWithRetry(url: string, attempts = 6): Promise<Response> {
 const toMinor = (value: string, minorUnit: number) =>
   Math.round((Number(value) || 0) * 10 ** (2 - minorUnit));
 
+// Studio versions of product photos, built by `npm run photos`.
+const STUDIO: Record<string, string> = studioPhotos;
+
+/** Uses the studio version of a photo when one has been rendered. */
 const mapImage = (img: RawImage, fallbackAlt: string): ProductImage => ({
-  src: img.src,
+  src: STUDIO[img.src] ?? img.src,
   alt: decodeEntities(img.alt || fallbackAlt),
 });
+
+/**
+ * The best photo of a product in one color: the color option's own photo if
+ * it shows the fountain, otherwise a gallery photo named for that color
+ * (studio versions first), otherwise the option's paint-chip image.
+ */
+function colorPhoto(color: string, own: RawImage | undefined, gallery: RawImage[], name: string) {
+  const alt = `${name} – ${color}`;
+  if (own && STUDIO[own.src]) return mapImage(own, alt);
+  const matches = gallery.filter((img) => photoMatchesColor(img.src, color));
+  const best = matches.find((img) => STUDIO[img.src]) ?? matches[0];
+  if (best) return mapImage(best, alt);
+  return own ? mapImage(own, alt) : undefined;
+}
 
 const mapSeo = (yoast: RawYoast | undefined): Seo => ({
   title: yoast?.title ? decodeEntities(yoast.title) : undefined,
@@ -188,10 +220,27 @@ function mapPage(raw: RawPage): WpPage {
   };
 }
 
-function mapProduct(raw: RawProduct): Product {
+function mapProduct(raw: RawProduct, variations: RawVariation[]): Product {
   const name = decodeEntities(raw.name);
   const colorAttr = raw.attributes.find((a) => /colou?r/i.test(a.name));
   const label = raw.price_html.match(/class="pre-price">([^<]+)</)?.[1];
+  const byId = new Map(variations.map((v) => [v.id, v]));
+
+  const options = raw.variations.flatMap(({ id, attributes }): ColorOption[] => {
+    const v = byId.get(id);
+    if (!v) return [];
+    const color = decodeEntities(attributes.find((a) => /colou?r/i.test(a.name))?.value ?? "");
+    return [
+      {
+        id,
+        color,
+        price: toMinor(v.prices.price, v.prices.currency_minor_unit),
+        regularPrice: toMinor(v.prices.regular_price, v.prices.currency_minor_unit),
+        image: colorPhoto(color, v.images[0], raw.images, name),
+      },
+    ];
+  });
+
   return {
     id: raw.id,
     slug: raw.slug,
@@ -207,10 +256,7 @@ function mapProduct(raw: RawProduct): Product {
     images: raw.images.map((img) => mapImage(img, name)),
     categories: raw.categories.map((c) => ({ slug: c.slug, name: decodeEntities(c.name) })),
     colors: colorAttr?.terms.map((t) => decodeEntities(t.name)) ?? [],
-    variationIds: raw.variations.map((v) => ({
-      id: v.id,
-      color: decodeEntities(v.attributes.find((a) => /colou?r/i.test(a.name))?.value ?? ""),
-    })),
+    options,
   };
 }
 
@@ -251,44 +297,21 @@ export async function getProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("wordpress", "products");
-  const raw = await wpFetchAll<RawProduct>("wc/store/v1/products");
-  return raw.map(mapProduct);
+  const [raw, variations] = await Promise.all([
+    wpFetchAll<RawProduct>("wc/store/v1/products"),
+    wpFetchAll<RawVariation>("wc/store/v1/products?type=variation"),
+  ]);
+  return raw.map((p) =>
+    mapProduct(
+      p,
+      variations.filter((v) => v.parent === p.id),
+    ),
+  );
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {
   const products = await getProducts();
   return products.find((p) => p.slug === slug) ?? null;
-}
-
-/** Every color option of every product, grouped by product ID. */
-async function getAllVariations(): Promise<Record<number, ProductVariation[]>> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("wordpress", "products");
-  const raw = await wpFetchAll<RawProduct & { parent: number; variation?: string }>(
-    "wc/store/v1/products?type=variation",
-  );
-  const byParent: Record<number, ProductVariation[]> = {};
-  for (const v of raw) {
-    const color = decodeEntities(v.variation?.split(":").slice(1).join(":").trim() ?? "");
-    (byParent[v.parent] ??= []).push({
-      id: v.id,
-      color,
-      price: toMinor(v.prices.price, v.prices.currency_minor_unit),
-      regularPrice: toMinor(v.prices.regular_price, v.prices.currency_minor_unit),
-      image: v.images[0] ? mapImage(v.images[0], color) : undefined,
-    });
-  }
-  return byParent;
-}
-
-/** Color options for a product, in the order set in WooCommerce. */
-export async function getVariations(
-  product: Pick<Product, "id" | "variationIds">,
-): Promise<ProductVariation[]> {
-  const all = await getAllVariations();
-  const found = new Map((all[product.id] ?? []).map((v) => [v.id, v]));
-  return product.variationIds.flatMap(({ id }) => found.get(id) ?? []);
 }
 
 export async function getCategories(): Promise<ProductCategory[]> {
@@ -322,4 +345,63 @@ async function getSeoMap(type: "product" | "product_cat"): Promise<Record<string
 export async function getSeo(type: "product" | "product_cat", slug: string): Promise<Seo> {
   const map = await getSeoMap(type);
   return map[slug] ?? {};
+}
+
+/* ------------------------------------------------------------------ */
+/* Homepage product lines                                              */
+/* ------------------------------------------------------------------ */
+
+const words = (text: string) =>
+  new Set(
+    decodeEntities(text)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .split(" ")
+      .filter((w) => w && w !== "cool" && w !== "dog")
+      .map((w) => w.replace(/s$/, "")),
+  );
+
+/** The category whose name best matches a card's title and subtitle. */
+function closestCategory(text: string, categories: ProductCategory[]) {
+  const target = words(text);
+  let best: { slug: string; score: number } | undefined;
+  for (const c of categories) {
+    const name = words(c.name);
+    const shared = [...name].filter((w) => target.has(w)).length;
+    const score = shared / new Set([...name, ...target]).size;
+    if (!best || score > best.score) best = { slug: c.slug, score };
+  }
+  return best && best.score >= 0.3 ? best.slug : undefined;
+}
+
+/**
+ * The "Dog Water Fountains" product-line grid on the WordPress homepage:
+ * one card per line, with its photo, title and short subtitle. Cards link to
+ * the matching product category.
+ */
+export async function getProductLines(): Promise<ProductLine[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "pages");
+  const [front, categories] = await Promise.all([
+    wpFetchAll<{ content: { rendered: string } }>(
+      "wp/v2/pages?slug=dog-water-fountains&_fields=content",
+    ),
+    getCategories(),
+  ]);
+  const blurbs = diviBlurbs(front[0]?.content.rendered ?? "");
+
+  return blurbs
+    .filter((b) => b.title && b.image)
+    .map((b) => {
+      const title = decodeEntities(b.title!).replace(/^COOL DOG\s+/i, "");
+      const subtitle = toPlainText(b.content);
+      const slug = closestCategory(`${title} ${subtitle}`, categories);
+      const href = slug
+        ? `/prod-category/${slug}/`
+        : b.link && !b.link.startsWith("@ET-DC@")
+          ? toLocalHref(b.link)
+          : "/shop/";
+      return { title, subtitle, image: mapImage({ src: b.image!, alt: b.alt }, title), href };
+    });
 }

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # claude local project data
 /.claude_project
+
+# studio photo build cache
+/.photo-cache

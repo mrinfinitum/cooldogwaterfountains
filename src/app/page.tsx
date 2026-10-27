@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import Carousel from "@/components/Carousel";
 import ProductCard from "@/components/ProductCard";
 import ProductTabs from "@/components/ProductTabs";
 import {
@@ -13,7 +12,14 @@ import {
   Wave,
 } from "@/components/icons";
 import { HERO_VIDEO, SERIES_CATEGORIES, upload } from "@/lib/site";
-import { getCategories, getPage, getProducts, type Product } from "@/lib/wordpress";
+import {
+  getCategories,
+  getPage,
+  getProductLines,
+  getProducts,
+  type Product,
+  type ProductLine,
+} from "@/lib/wordpress";
 import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -64,8 +70,22 @@ const COLOR_CHIPS = [
 ];
 
 export default async function HomePage() {
-  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
-  const types = categories.filter((c) => !SERIES_CATEGORIES.includes(c.slug) && c.image);
+  const [products, categories, productLines] = await Promise.all([
+    getProducts(),
+    getCategories(),
+    getProductLines(),
+  ]);
+  // Product lines come from the WordPress homepage grid; categories are the fallback.
+  const lines: ProductLine[] = productLines.length
+    ? productLines
+    : categories
+        .filter((c) => !SERIES_CATEGORIES.includes(c.slug) && c.image)
+        .map((c) => ({
+          title: c.name.replace(/^COOL DOG\s+/i, ""),
+          subtitle: "",
+          image: c.image,
+          href: `/prod-category/${c.slug}/`,
+        }));
 
   const inCategory = (slug: string) =>
     products.filter((p) => p.categories.some((c) => c.slug === slug));
@@ -137,36 +157,41 @@ export default async function HomePage() {
             Shop all fountains
           </Link>
         </div>
-        <Carousel label="Fountain types">
-          {types.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/prod-category/${c.slug}/`}
-              className="group w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-[calc(25%-12px)]"
-            >
-              <div className="relative aspect-[4/5] overflow-hidden bg-mist">
-                {c.image && (
+        <div className="grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {lines.map((line) => (
+            <Link key={line.href + line.subtitle} href={line.href} className="group flex flex-col">
+              <div className="relative aspect-square overflow-hidden bg-mist">
+                {line.image && (
                   <Image
-                    src={c.image.src}
-                    alt={c.image.alt}
+                    src={line.image.src}
+                    alt={line.image.alt}
                     fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 44vw, 78vw"
-                    className="object-cover transition duration-700 group-hover:scale-105"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-contain transition duration-700 group-hover:scale-[1.03]"
                   />
                 )}
               </div>
-              <h3 className="headline mt-4 text-3xl group-hover:text-teal">
-                {c.name.replace(/^COOL DOG\s+/i, "")}
-              </h3>
-              {c.description && (
-                <p className="mt-2 line-clamp-2 text-sm text-muted">{c.description}</p>
-              )}
-              <span className="eyebrow mt-3 inline-flex items-center gap-2 text-teal">
+              {line.subtitle && <p className="eyebrow mt-5 text-teal">{line.subtitle}</p>}
+              <h3 className="headline mt-2 text-3xl group-hover:text-teal">{line.title}</h3>
+              <span className="eyebrow mt-auto inline-flex items-center gap-2 pt-4">
                 Shop <ArrowIcon width={14} height={14} />
               </span>
             </Link>
           ))}
-        </Carousel>
+          <Link
+            href="/contact-us/"
+            className="group flex aspect-square flex-col justify-between bg-deep p-8 text-white"
+          >
+            <p className="eyebrow text-aqua">Not sure which fits?</p>
+            <div>
+              <h3 className="headline text-5xl">We&apos;ll help you choose</h3>
+              <p className="mt-4 text-white/75">
+                Tell us about your park or property and we&apos;ll recommend the right fountain.
+              </p>
+              <span className="btn btn-light mt-6 group-hover:bg-aqua-light">Build a Quote</span>
+            </div>
+          </Link>
+        </div>
       </section>
 
       {/* ---------------- 50 / 50: quality ---------------- */}

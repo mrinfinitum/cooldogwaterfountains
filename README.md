@@ -29,6 +29,27 @@ The WordPress pages are built with Divi, and the REST API returns them as raw Di
 rows and columns), then `src/lib/html.ts` sanitizes the result. Layout styling from Divi is
 intentionally dropped; pages are restyled to match the new design.
 
+## Studio product photos
+
+Product photos shot on white are re-rendered as clean studio shots: the white background and the
+"COOL DOG" watermark are removed, and the product is placed, uncropped, on a soft aqua backdrop
+with a floor shadow. The fountain itself is never altered — only the background around it.
+Lifestyle photos, close-ups, graphics and paint chips are left as they are.
+
+The studio versions live in `public/studio/`, and `src/data/studio-photos.json` maps each
+WordPress photo to its studio version. After adding or changing product photos in WordPress, run
+(on a Mac):
+
+```bash
+npm run photos
+```
+
+then commit the updated `public/studio/` and `src/data/studio-photos.json`. Photos without a
+studio version simply show the original from WordPress.
+
+Each color option shows the fountain in that color: the option's own photo if it has one,
+otherwise the gallery photo whose file name names the color (e.g. `…-BlueAqua-WM.jpg`).
+
 ## Routes
 
 | URL | Page |
@@ -102,4 +123,5 @@ npm run dev     # development server
 npm run build   # production build
 npm run start   # serve the production build
 npm run lint    # ESLint
+npm run photos  # rebuild studio product photos (macOS)
 ```

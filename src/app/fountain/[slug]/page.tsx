@@ -9,7 +9,7 @@ import QuoteCta from "@/components/QuoteCta";
 import WpContent from "@/components/WpContent";
 import { ChevronIcon } from "@/components/icons";
 import { RESOURCE_LINKS, SERIES_CATEGORIES, SITE_NAME, WP_URL } from "@/lib/site";
-import { getProduct, getProducts, getSeo, getVariations, type Product } from "@/lib/wordpress";
+import { getProduct, getProducts, getSeo, type Product } from "@/lib/wordpress";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -57,7 +57,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [variations, all] = await Promise.all([getVariations(product), getProducts()]);
+  const all = await getProducts();
   const typeCategory = product.categories.find((c) => !SERIES_CATEGORIES.includes(c.slug));
   const related = all
     .filter((p) => p.id !== product.id)
@@ -120,7 +120,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
         priceLabel={product.priceLabel}
         inStock={product.inStock}
         images={product.images}
-        variations={variations}
+        variations={product.options}
         wpUrl={WP_URL}
         productId={product.id}
       >
