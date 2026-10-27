@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cool Dog Water Fountains — headless Next.js site
 
-## Getting Started
+The front end for [cooldogwaterfountains.com](https://www.cooldogwaterfountains.com), built with
+Next.js 16. **WordPress + WooCommerce stay the CMS and the store**: pages, products, prices,
+colors, photos and SEO fields are all edited in WordPress as before, and this site reads them
+through the public WordPress REST API.
 
-First, run the development server:
+The design follows [Filson](https://www.filson.com/)'s layout — tall condensed headlines,
+typewriter-style labels, full-bleed photography, mega menus, tabbed product grids — recolored in
+teal, blue and aqua.
+
+## What comes from WordPress
+
+| Site section | Source |
+| --- | --- |
+| Products, prices, colors, photos | WooCommerce Store API (`/wp-json/wc/store/v1/...`) |
+| Product categories (names, descriptions, images) | WooCommerce Store API |
+| Content pages (Plumbing, Colors, Mission, Terms…) | WordPress pages (`/wp-json/wp/v2/pages`) |
+| Page titles & descriptions for search engines | Yoast SEO fields |
+| Cart, checkout, accounts | WooCommerce on the WordPress site |
+
+Homepage marketing copy, the menu structure and the contact details live in code
+(`src/app/page.tsx`, `src/lib/site.ts`).
+
+### Divi content
+
+The WordPress pages are built with Divi, and the REST API returns them as raw Divi shortcodes.
+`src/lib/divi.ts` converts them to clean HTML (text, headings, images, buttons, blurbs, toggles,
+rows and columns), then `src/lib/html.ts` sanitizes the result. Layout styling from Divi is
+intentionally dropped; pages are restyled to match the new design.
+
+## Routes
+
+| URL | Page |
+| --- | --- |
+| `/` | Homepage |
+| `/shop/` | All fountains |
+| `/prod-category/<slug>/` | A product category (same URL as WordPress) |
+| `/fountain/<slug>/` | A product (same URL as WordPress) |
+| `/contact-us/` | Contact + Build a Quote form |
+| `/<page-slug>/` | Any other WordPress page |
+| `/cart/`, `/checkout/`, `/my-account/` | Redirect to WooCommerce |
+
+URLs keep WordPress's trailing slashes so existing links and search rankings carry over.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # then edit values
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Purpose |
+| --- | --- |
+| `WORDPRESS_URL` | The WordPress / WooCommerce site to read from |
+| `NEXT_PUBLIC_SITE_URL` | Public address of this site (canonical URLs, sitemap) |
+| `REVALIDATE_SECRET` | Shared secret for instant content refresh (below) |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Keeping content fresh
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Content is cached and refreshed from WordPress every hour. To update the site immediately when
+something is saved in WordPress, add this to the WordPress theme's `functions.php` (or a small
+plugin), using the same secret as `REVALIDATE_SECRET`:
 
-## Learn More
+```php
+add_action('save_post', function ($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+        return;
+    }
+    wp_remote_post('https://www.cooldogwaterfountains.com/api/revalidate/', [
+        'headers'  => ['x-revalidate-secret' => 'YOUR_SECRET'],
+        'timeout'  => 5,
+        'blocking' => false,
+    ]);
+});
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Going live
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Move WordPress to a subdomain such as `cms.cooldogwaterfountains.com` (or `shop.`), and set
+   `WORDPRESS_URL` to it. Cart, checkout and account links will follow.
+2. Point `www.cooldogwaterfountains.com` at this Next.js app (e.g. on Vercel) and set
+   `NEXT_PUBLIC_SITE_URL`.
+3. Add the revalidation snippet above.
+4. In Yoast, keep the WordPress subdomain out of search results (Settings → "Discourage search
+   engines" on the CMS host) so only the new site is indexed.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
+- **Quote form** — opens the visitor's email app with the request filled in, addressed to
+  `sales@gymsfordogs.com`. To receive submissions directly, connect a form service or email API.
+- **Missing pages** — an unknown URL shows the 404 page with a `noindex` tag; because pages
+  stream, the HTTP status is 200.
+- **Rate limits** — the WordPress host rate-limits bursts of API calls, so the data layer fetches
+  each collection in one request and retries politely when asked to slow down.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev     # development server
+npm run build   # production build
+npm run start   # serve the production build
+npm run lint    # ESLint
+```

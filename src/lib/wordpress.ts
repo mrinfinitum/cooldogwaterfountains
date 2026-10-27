@@ -1,0 +1,325 @@
+import { cacheLife, cacheTag } from "next/cache";
+import { diviHeroImage } from "./divi";
+import { cleanWpHtml, decodeEntities, toPlainText } from "./html";
+import { WP_URL } from "./site";
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+export type Seo = {
+  title?: string;
+  description?: string;
+  image?: string;
+};
+
+export type WpPage = {
+  id: number;
+  slug: string;
+  title: string;
+  html: string;
+  /** Banner photo from the page's first Divi section, if it is hosted on WordPress. */
+  heroImage?: string;
+  modified: string;
+  seo: Seo;
+};
+
+export type ProductImage = { src: string; alt: string };
+
+export type ProductVariation = {
+  id: number;
+  color: string;
+  price: number;
+  regularPrice: number;
+  image?: ProductImage;
+};
+
+export type Product = {
+  id: number;
+  slug: string;
+  name: string;
+  sku: string;
+  summary: string;
+  descriptionHtml: string;
+  price: number;
+  regularPrice: number;
+  onSale: boolean;
+  priceLabel?: string;
+  inStock: boolean;
+  images: ProductImage[];
+  categories: { slug: string; name: string }[];
+  colors: string[];
+  variationIds: { id: number; color: string }[];
+};
+
+export type ProductCategory = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  count: number;
+  image?: ProductImage;
+};
+
+/* ------------------------------------------------------------------ */
+/* Raw API shapes (only the fields we use)                             */
+/* ------------------------------------------------------------------ */
+
+type RawYoast = {
+  title?: string;
+  description?: string;
+  og_description?: string;
+  og_image?: { url: string }[];
+};
+
+type RawPage = {
+  id: number;
+  slug: string;
+  title: { rendered: string };
+  content: { rendered: string };
+  modified: string;
+  yoast_head_json?: RawYoast;
+};
+
+type RawImage = { src: string; alt?: string; name?: string };
+
+type RawPrices = {
+  price: string;
+  regular_price: string;
+  currency_minor_unit: number;
+};
+
+type RawProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  sku: string;
+  short_description: string;
+  description: string;
+  on_sale: boolean;
+  prices: RawPrices;
+  price_html: string;
+  is_in_stock: boolean;
+  images: RawImage[];
+  categories: { slug: string; name: string }[];
+  attributes: { name: string; terms: { name: string }[] }[];
+  variations: { id: number; attributes: { name: string; value: string }[] }[];
+};
+
+type RawCategory = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  count: number;
+  image: RawImage | null;
+};
+
+/* ------------------------------------------------------------------ */
+/* Fetching                                                            */
+/* ------------------------------------------------------------------ */
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Fetch every page of a WordPress REST collection.
+ * Retries when WordPress rate-limits or hiccups, and throws if it still
+ * fails, so a temporary outage never gets cached as "no content".
+ */
+async function wpFetchAll<T>(path: string): Promise<T[]> {
+  const results: T[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const separator = path.includes("?") ? "&" : "?";
+    const res = await fetchWithRetry(
+      `${WP_URL}/wp-json/${path}${separator}per_page=100&page=${page}`,
+    );
+    results.push(...((await res.json()) as T[]));
+    totalPages = Number(res.headers.get("x-wp-totalpages") ?? 1);
+    page += 1;
+  } while (page <= totalPages);
+  return results;
+}
+
+async function fetchWithRetry(url: string, attempts = 6): Promise<Response> {
+  let lastError = "";
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (res.ok) return res;
+      lastError = `HTTP ${res.status}`;
+      if (res.status !== 429 && res.status < 500) break;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const wait = retryAfter > 0 ? Math.min(retryAfter * 1000, 15_000) : 500 * 2 ** attempt;
+      await sleep(wait + Math.random() * 250);
+    } catch (error) {
+      lastError = String(error);
+      await sleep(500 * 2 ** attempt);
+    }
+  }
+  throw new Error(`WordPress request failed (${lastError}): ${url}`);
+}
+
+const toMinor = (value: string, minorUnit: number) =>
+  Math.round((Number(value) || 0) * 10 ** (2 - minorUnit));
+
+const mapImage = (img: RawImage, fallbackAlt: string): ProductImage => ({
+  src: img.src,
+  alt: decodeEntities(img.alt || fallbackAlt),
+});
+
+const mapSeo = (yoast: RawYoast | undefined): Seo => ({
+  title: yoast?.title ? decodeEntities(yoast.title) : undefined,
+  description: yoast?.description ?? yoast?.og_description,
+  image: yoast?.og_image?.[0]?.url,
+});
+
+function mapPage(raw: RawPage): WpPage {
+  const hero = diviHeroImage(raw.content.rendered);
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    title: decodeEntities(raw.title.rendered),
+    html: cleanWpHtml(raw.content.rendered),
+    heroImage: hero?.startsWith(`${WP_URL}/wp-content/uploads/`) ? hero : undefined,
+    modified: raw.modified,
+    seo: mapSeo(raw.yoast_head_json),
+  };
+}
+
+function mapProduct(raw: RawProduct): Product {
+  const name = decodeEntities(raw.name);
+  const colorAttr = raw.attributes.find((a) => /colou?r/i.test(a.name));
+  const label = raw.price_html.match(/class="pre-price">([^<]+)</)?.[1];
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    name,
+    sku: raw.sku,
+    summary: toPlainText(raw.short_description),
+    descriptionHtml: cleanWpHtml(raw.description, { images: false }),
+    price: toMinor(raw.prices.price, raw.prices.currency_minor_unit),
+    regularPrice: toMinor(raw.prices.regular_price, raw.prices.currency_minor_unit),
+    onSale: raw.on_sale,
+    priceLabel: label ? decodeEntities(label).replace(/:\s*$/, "") : undefined,
+    inStock: raw.is_in_stock,
+    images: raw.images.map((img) => mapImage(img, name)),
+    categories: raw.categories.map((c) => ({ slug: c.slug, name: decodeEntities(c.name) })),
+    colors: colorAttr?.terms.map((t) => decodeEntities(t.name)) ?? [],
+    variationIds: raw.variations.map((v) => ({
+      id: v.id,
+      color: decodeEntities(v.attributes.find((a) => /colou?r/i.test(a.name))?.value ?? ""),
+    })),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Pages                                                               */
+/* ------------------------------------------------------------------ */
+
+// Pages handled elsewhere: WooCommerce screens, the front page, and
+// routes with their own design.
+export const RESERVED_PAGE_SLUGS = new Set([
+  "cart",
+  "checkout",
+  "my-account",
+  "dog-water-fountains",
+  "contact-us",
+]);
+
+export async function getPages(): Promise<WpPage[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "pages");
+  const raw = await wpFetchAll<RawPage>(
+    "wp/v2/pages?status=publish&_fields=id,slug,title,content,modified,yoast_head_json",
+  );
+  return raw.map(mapPage);
+}
+
+export async function getPage(slug: string): Promise<WpPage | null> {
+  const pages = await getPages();
+  return pages.find((p) => p.slug === slug) ?? null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Products (WooCommerce Store API — public, no keys needed)           */
+/* ------------------------------------------------------------------ */
+
+export async function getProducts(): Promise<Product[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "products");
+  const raw = await wpFetchAll<RawProduct>("wc/store/v1/products");
+  return raw.map(mapProduct);
+}
+
+export async function getProduct(slug: string): Promise<Product | null> {
+  const products = await getProducts();
+  return products.find((p) => p.slug === slug) ?? null;
+}
+
+/** Every color option of every product, grouped by product ID. */
+async function getAllVariations(): Promise<Record<number, ProductVariation[]>> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "products");
+  const raw = await wpFetchAll<RawProduct & { parent: number; variation?: string }>(
+    "wc/store/v1/products?type=variation",
+  );
+  const byParent: Record<number, ProductVariation[]> = {};
+  for (const v of raw) {
+    const color = decodeEntities(v.variation?.split(":").slice(1).join(":").trim() ?? "");
+    (byParent[v.parent] ??= []).push({
+      id: v.id,
+      color,
+      price: toMinor(v.prices.price, v.prices.currency_minor_unit),
+      regularPrice: toMinor(v.prices.regular_price, v.prices.currency_minor_unit),
+      image: v.images[0] ? mapImage(v.images[0], color) : undefined,
+    });
+  }
+  return byParent;
+}
+
+/** Color options for a product, in the order set in WooCommerce. */
+export async function getVariations(
+  product: Pick<Product, "id" | "variationIds">,
+): Promise<ProductVariation[]> {
+  const all = await getAllVariations();
+  const found = new Map((all[product.id] ?? []).map((v) => [v.id, v]));
+  return product.variationIds.flatMap(({ id }) => found.get(id) ?? []);
+}
+
+export async function getCategories(): Promise<ProductCategory[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "products");
+  const raw = await wpFetchAll<RawCategory>("wc/store/v1/products/categories");
+  return raw
+    .filter((c) => c.count > 0 && c.slug !== "uncategorized")
+    .map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name: decodeEntities(c.name),
+      description: toPlainText(c.description),
+      count: c.count,
+      image: c.image ? mapImage(c.image, decodeEntities(c.name)) : undefined,
+    }));
+}
+
+/** Yoast SEO fields for every product or product category, keyed by slug. */
+async function getSeoMap(type: "product" | "product_cat"): Promise<Record<string, Seo>> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("wordpress", "seo");
+  const raw = await wpFetchAll<{ slug: string; yoast_head_json?: RawYoast }>(
+    `wp/v2/${type}?_fields=slug,yoast_head_json`,
+  );
+  return Object.fromEntries(raw.map((item) => [item.slug, mapSeo(item.yoast_head_json)]));
+}
+
+export async function getSeo(type: "product" | "product_cat", slug: string): Promise<Seo> {
+  const map = await getSeoMap(type);
+  return map[slug] ?? {};
+}
