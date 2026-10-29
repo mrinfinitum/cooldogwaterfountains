@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import studioPhotos from "@/data/studio-photos.json";
 import { photoMatchesColor } from "./colors";
 import { diviBlurbs, diviHeroImage } from "./divi";
-import { cleanWpHtml, decodeEntities, toLocalHref, toPlainText } from "./html";
+import { cleanWpHtml, decodeEntities, toLocalHref, toPlainText, toWpMediaUrl } from "./html";
 import { WP_URL } from "./site";
 
 /* ------------------------------------------------------------------ */
@@ -179,11 +179,20 @@ const toMinor = (value: string, minorUnit: number) =>
   Math.round((Number(value) || 0) * 10 ** (2 - minorUnit));
 
 // Studio versions of product photos, built by `npm run photos`.
-const STUDIO: Record<string, string> = studioPhotos;
+// Keyed by the path under /wp-content/uploads/ so lookups keep working when
+// WordPress moves to another domain.
+const uploadsPath = (url: string) => url.split("/wp-content/uploads/")[1] ?? url;
+const STUDIO: Record<string, string> = Object.fromEntries(
+  Object.entries(studioPhotos as Record<string, string>).map(([url, file]) => [
+    uploadsPath(url),
+    file,
+  ]),
+);
+const studioFor = (url: string): string | undefined => STUDIO[uploadsPath(url)];
 
 /** Uses the studio version of a photo when one has been rendered. */
 const mapImage = (img: RawImage, fallbackAlt: string): ProductImage => ({
-  src: STUDIO[img.src] ?? img.src,
+  src: studioFor(img.src) ?? toWpMediaUrl(img.src),
   alt: decodeEntities(img.alt || fallbackAlt),
 });
 
@@ -194,9 +203,9 @@ const mapImage = (img: RawImage, fallbackAlt: string): ProductImage => ({
  */
 function colorPhoto(color: string, own: RawImage | undefined, gallery: RawImage[], name: string) {
   const alt = `${name} – ${color}`;
-  if (own && STUDIO[own.src]) return mapImage(own, alt);
+  if (own && studioFor(own.src)) return mapImage(own, alt);
   const matches = gallery.filter((img) => photoMatchesColor(img.src, color));
-  const best = matches.find((img) => STUDIO[img.src]) ?? matches[0];
+  const best = matches.find((img) => studioFor(img.src)) ?? matches[0];
   if (best) return mapImage(best, alt);
   return own ? mapImage(own, alt) : undefined;
 }
@@ -217,7 +226,12 @@ function mapPage(raw: RawPage): WpPage {
     slug: raw.slug,
     title: decodeEntities(raw.title.rendered),
     html: cleanWpHtml(raw.content.rendered),
-    heroImage: hero?.startsWith(`${WP_URL}/wp-content/uploads/`) ? hero : undefined,
+    heroImage:
+      hero &&
+      /\/wp-content\/uploads\//.test(toWpMediaUrl(hero)) &&
+      toWpMediaUrl(hero).startsWith(WP_URL)
+        ? toWpMediaUrl(hero)
+        : undefined,
     modified: raw.modified,
     seo: mapSeo(raw.yoast_head_json),
   };

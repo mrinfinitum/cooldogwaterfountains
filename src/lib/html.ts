@@ -74,8 +74,20 @@ function removeEmptyElements(html: string): string {
   return out;
 }
 
-const SITE_HOST = /^https?:\/\/(www\.)?cooldogwaterfountains\.com/i;
-const WP_ONLY_PATHS = /^\/(wp-content|wp-admin|cart|checkout|my-account)\b/;
+// Any host of the site: www (old WordPress / new site) or the WordPress subdomain.
+const SITE_HOST = /^https?:\/\/([a-z0-9-]+\.)?cooldogwaterfountains\.com/i;
+const WP_ONLY_PATHS = /^\/(wp-content|wp-admin|wp-login\.php|cart|checkout|my-account)\b/;
+
+/**
+ * Point WordPress media URLs at the current WordPress host, so content saved
+ * while WordPress lived on www keeps working after it moves to a subdomain.
+ */
+export function toWpMediaUrl(url: string): string {
+  const match = url.match(SITE_HOST);
+  return match && /^\/wp-content\//.test(url.slice(match[0].length))
+    ? `${WP_URL}${url.slice(match[0].length)}`
+    : url;
+}
 
 /** Turn links to the old WordPress site into links within this app. */
 export function toLocalHref(href: string): string {
@@ -169,7 +181,20 @@ export function cleanWpHtml(
       },
       img: (tagName, attribs) => ({
         tagName,
-        attribs: { ...attribs, loading: "lazy", decoding: "async" },
+        attribs: {
+          ...attribs,
+          ...(attribs.src ? { src: toWpMediaUrl(attribs.src) } : {}),
+          ...(attribs.srcset
+            ? {
+                srcset: attribs.srcset
+                  .split(",")
+                  .map((part) => part.trim().replace(/^\S+/, (u) => toWpMediaUrl(u)))
+                  .join(", "),
+              }
+            : {}),
+          loading: "lazy",
+          decoding: "async",
+        },
       }),
     },
   });

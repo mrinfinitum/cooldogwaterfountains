@@ -24,13 +24,38 @@ const nextConfig: NextConfig = {
     return [
       // The WordPress front page lives at "/" here.
       { source: "/dog-water-fountains/", destination: "/", permanent: true },
-      // Cart, checkout and accounts are handled by WooCommerce.
+      // Old WooCommerce tag archives.
+      { source: "/product-tag/:tag*", destination: "/shop/", permanent: true },
+      // Served by WordPress (WORDPRESS_URL), which must not share this domain:
+      // cart, checkout and accounts (WooCommerce), plus admin, login and media.
       { source: "/cart/", destination: `${WP_URL}/cart/`, permanent: false },
-      { source: "/checkout/:path*", destination: `${WP_URL}/checkout/:path*`, permanent: false },
+      // WooCommerce payment callbacks (…/?wc-api=…); update gateway webhook URLs too.
+      {
+        source: "/",
+        has: [{ type: "query", key: "wc-api" }],
+        destination: `${WP_URL}/`,
+        permanent: false,
+      },
+      {
+        source: "/checkout/:path*",
+        destination: `${WP_URL}/checkout/:path*`,
+        permanent: false,
+      },
       {
         source: "/my-account/:path*",
         destination: `${WP_URL}/my-account/:path*`,
         permanent: false,
+      },
+      {
+        source: "/wp-admin/:path*",
+        destination: `${WP_URL}/wp-admin/:path*`,
+        permanent: false,
+      },
+      { source: "/wp-login.php", destination: `${WP_URL}/wp-login.php`, permanent: false },
+      {
+        source: "/wp-content/:path*",
+        destination: `${WP_URL}/wp-content/:path*`,
+        permanent: true,
       },
     ];
   },

@@ -63,6 +63,14 @@ otherwise the gallery photo whose file name names the color (e.g. `…-BlueAqua-
   ([llmstxt.org](https://llmstxt.org)), built from the same WordPress data.
 - Structured data: `Product` on product pages, `Organization` and `WebSite` on the homepage.
 
+### Optimizing Yoast in WordPress
+
+`wordpress/cooldog-seo-import.zip` is a one-time WordPress plugin that writes optimized Yoast
+titles, meta descriptions and focus keyphrases for every page, product and product category
+(copy in `scripts/seo/yoast-copy.py`). Upload it under Plugins → Add New → Upload, open
+Tools → Cool Dog SEO Import, review, and click Apply. Current values are backed up and can be
+restored from the same screen. Delete the plugin afterwards.
+
 ## Routes
 
 | URL | Page |
@@ -93,32 +101,81 @@ npm run dev                  # http://localhost:3000
 
 ## Keeping content fresh
 
-Content is cached and refreshed from WordPress every hour. To update the site immediately when
-something is saved in WordPress, add this to the WordPress theme's `functions.php` (or a small
-plugin), using the same secret as `REVALIDATE_SECRET`:
+Content is cached and refreshed from WordPress every hour. The **Cool Dog Headless** WordPress
+plugin (`wordpress/cooldog-headless.zip`, see *Going live*) calls `POST /api/revalidate/` with
+the `x-revalidate-secret` header whenever pages, products, prices, stock or categories change,
+so updates appear within seconds.
 
-```php
-add_action('save_post', function ($post_id) {
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
-        return;
-    }
-    wp_remote_post('https://www.cooldogwaterfountains.com/api/revalidate/', [
-        'headers'  => ['x-revalidate-secret' => 'YOUR_SECRET'],
-        'timeout'  => 5,
-        'blocking' => false,
-    ]);
-});
-```
+## Going live (headless setup)
 
-## Going live
+Today WordPress runs on WordPress.com's hosting (WP Cloud) at `www`, with DNS and proxying on
+Cloudflare. After the switch:
 
-1. Move WordPress to a subdomain such as `cms.cooldogwaterfountains.com` (or `shop.`), and set
-   `WORDPRESS_URL` to it. Cart, checkout and account links will follow.
-2. Point `www.cooldogwaterfountains.com` at this Next.js app (e.g. on Vercel) and set
-   `NEXT_PUBLIC_SITE_URL`.
-3. Add the revalidation snippet above.
-4. In Yoast, keep the WordPress subdomain out of search results (Settings → "Discourage search
-   engines" on the CMS host) so only the new site is indexed.
+| Address | Serves |
+| --- | --- |
+| `www.cooldogwaterfountains.com` | This Next.js site on Vercel (all browsing) |
+| `shop.cooldogwaterfountains.com` | WordPress + WooCommerce: admin, content API, cart, checkout, My Account, media |
+
+### 1. Deploy to Vercel (nothing changes for visitors yet)
+
+1. Vercel → Add New Project → import `mrinfinitum/cooldogwaterfountains` (framework: Next.js).
+2. Environment variables:
+   - `WORDPRESS_URL` = `https://www.cooldogwaterfountains.com` (for now)
+   - `NEXT_PUBLIC_SITE_URL` = `https://www.cooldogwaterfountains.com`
+   - `REVALIDATE_SECRET` = a long random string (e.g. `openssl rand -hex 32`)
+3. Deploy and review the `*.vercel.app` preview: pages, products, add to cart, quote form.
+
+### 2. Move WordPress to `shop.cooldogwaterfountains.com`
+
+1. WordPress.com → Upgrades → Domains → Add a domain → *Use a domain I own* → enter
+   `shop.cooldogwaterfountains.com` and follow the DNS instructions (add the records in
+   Cloudflare; set them to **DNS only** until WordPress.com has issued the SSL certificate).
+2. Make `shop.cooldogwaterfountains.com` the **primary** domain. WordPress.com updates the site
+   address; old `www` links redirect to it while `www` still points at WordPress.com.
+3. Check `https://shop.cooldogwaterfountains.com/wp-admin/`, the cart and a test checkout.
+4. **Payment gateways**: update any webhook / IPN URLs in Stripe, PayPal, etc. from `www` to
+   `shop` (for example `https://shop.cooldogwaterfountains.com/?wc-api=wc_stripe`).
+
+### 3. Point the website at the new WordPress address
+
+In Vercel, set `WORDPRESS_URL` = `https://shop.cooldogwaterfountains.com` and redeploy.
+
+### 4. Switch `www` to Vercel
+
+1. Vercel → Project → Settings → Domains: add `www.cooldogwaterfountains.com` (primary) and
+   `cooldogwaterfountains.com` (redirect to www).
+2. Cloudflare DNS, using the records Vercel shows (typically):
+   - `www` → CNAME `cname.vercel-dns.com`, **DNS only** (grey cloud)
+   - `@` → A `76.76.21.21`, **DNS only**
+   Leave MX / email records alone.
+3. Remove `www` from WordPress.com's domain list (keep `shop`).
+
+The site's redirects send `/cart/`, `/checkout/`, `/my-account/`, `/wp-admin/`,
+`/wp-login.php`, `/wp-content/…` and `/?wc-api=…` on www to the WordPress subdomain.
+
+### 5. Connect WordPress to the website
+
+1. Upload `wordpress/cooldog-headless.zip` (Plugins → Add New → Upload) and activate.
+2. Settings → Cool Dog Headless: website address `https://www.cooldogwaterfountains.com`,
+   refresh secret = `REVALIDATE_SECRET`. Save, then **Test refresh now** (should report 200).
+3. Tick **Send visitors to the website** and save. WordPress pages now redirect to the same page
+   on the website; cart, checkout, My Account, admin and logged-in editors stay on WordPress.
+4. Hide WordPress from search: WordPress.com → Settings → Reading (or Hosting → Site visibility)
+   → *Discourage search engines*. The website is what gets indexed.
+5. Optional: `wordpress/cooldog-seo-import.zip` applies optimized Yoast SEO (see SEO above).
+
+### 6. After launch
+
+- Google Search Console: add `www` (if not already) and submit `https://www.cooldogwaterfountains.com/sitemap.xml`.
+- Cloudflare: if Bot Fight Mode / WAF is on, add a rule skipping it for
+  `shop.cooldogwaterfountains.com/wp-json/*` so Vercel can read content.
+- Analytics: the WordPress site used Google Site Kit; add your GA4 tag to this site.
+
+### Day to day
+
+Edit pages, products, prices, photos and Yoast SEO in WordPress (`shop.…/wp-admin`). The website
+updates within seconds (Cool Dog Headless) or at most an hour. After adding product photos, run
+`npm run photos` and push to refresh the studio versions.
 
 ## Notes
 
