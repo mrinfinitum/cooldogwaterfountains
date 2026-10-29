@@ -160,7 +160,8 @@ export function renderDivi(html: string): string {
     },
   );
 
-  return out;
+  // Divi "dynamic content" placeholders (@ET-DC@…@) only work inside Divi.
+  return out.replace(/@ET-DC@[A-Za-z0-9+/=]+@/g, "");
 }
 
 export type DiviBlurb = {

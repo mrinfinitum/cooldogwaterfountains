@@ -201,11 +201,14 @@ function colorPhoto(color: string, own: RawImage | undefined, gallery: RawImage[
   return own ? mapImage(own, alt) : undefined;
 }
 
-const mapSeo = (yoast: RawYoast | undefined): Seo => ({
-  title: yoast?.title ? decodeEntities(yoast.title) : undefined,
-  description: yoast?.description ?? yoast?.og_description,
-  image: yoast?.og_image?.[0]?.url,
-});
+const mapSeo = (yoast: RawYoast | undefined): Seo => {
+  const description = yoast?.description ?? yoast?.og_description;
+  return {
+    title: yoast?.title ? decodeEntities(yoast.title) : undefined,
+    description: description ? toPlainText(description) : undefined,
+    image: yoast?.og_image?.[0]?.url,
+  };
+};
 
 function mapPage(raw: RawPage): WpPage {
   const hero = diviHeroImage(raw.content.rendered);
@@ -247,7 +250,8 @@ function mapProduct(raw: RawProduct, variations: RawVariation[]): Product {
     name,
     sku: raw.sku,
     summary: toPlainText(raw.short_description),
-    descriptionHtml: cleanWpHtml(raw.description, { images: false }),
+    // Shown under the product's h1 inside "Details" (an h2), so it starts at h3.
+    descriptionHtml: cleanWpHtml(raw.description, { images: false, topHeading: 3 }),
     price: toMinor(raw.prices.price, raw.prices.currency_minor_unit),
     regularPrice: toMinor(raw.prices.regular_price, raw.prices.currency_minor_unit),
     onSale: raw.on_sale,
@@ -340,6 +344,11 @@ async function getSeoMap(type: "product" | "product_cat"): Promise<Record<string
     `wp/v2/${type}?_fields=slug,yoast_head_json`,
   );
   return Object.fromEntries(raw.map((item) => [item.slug, mapSeo(item.yoast_head_json)]));
+}
+
+/** Yoast SEO fields for every product or category (to spot duplicates). */
+export async function getAllSeo(type: "product" | "product_cat"): Promise<Seo[]> {
+  return Object.values(await getSeoMap(type));
 }
 
 export async function getSeo(type: "product" | "product_cat", slug: string): Promise<Seo> {

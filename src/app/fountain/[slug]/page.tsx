@@ -9,7 +9,8 @@ import QuoteCta from "@/components/QuoteCta";
 import WpContent from "@/components/WpContent";
 import { ChevronIcon } from "@/components/icons";
 import { RESOURCE_LINKS, SERIES_CATEGORIES, SITE_NAME, WP_URL } from "@/lib/site";
-import { getProduct, getProducts, getSeo, type Product } from "@/lib/wordpress";
+import { productMetadata } from "@/lib/seo";
+import { getAllSeo, getProduct, getProducts, getSeo, type Product } from "@/lib/wordpress";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -20,14 +21,12 @@ export async function generateMetadata({
   params,
 }: PageProps<"/fountain/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const [product, seo] = await Promise.all([getProduct(slug), getSeo("product", slug)]);
-  if (!product) return {};
-  return {
-    title: seo.title ? { absolute: seo.title } : product.name,
-    description: seo.description ?? product.summary.slice(0, 160),
-    alternates: { canonical: `/fountain/${product.slug}/` },
-    openGraph: { images: product.images.slice(0, 1).map((i) => i.src) },
-  };
+  const [product, seo, allSeo] = await Promise.all([
+    getProduct(slug),
+    getSeo("product", slug),
+    getAllSeo("product"),
+  ]);
+  return product ? productMetadata(product, seo, allSeo) : {};
 }
 
 const seriesOf = (p: Product) => p.name.match(/\((SST|SLV|STE)\)/)?.[1];
@@ -44,7 +43,7 @@ function Accordion({
   return (
     <details open={open} className="group border-b border-line">
       <summary className="eyebrow flex cursor-pointer list-none items-center justify-between py-5">
-        {title}
+        <h2>{title}</h2>
         <ChevronIcon className="transition group-open:rotate-180" />
       </summary>
       <div className="pb-6">{children}</div>

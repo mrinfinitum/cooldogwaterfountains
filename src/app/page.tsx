@@ -11,25 +11,37 @@ import {
   ShieldIcon,
   Wave,
 } from "@/components/icons";
-import { HERO_VIDEO, SERIES_CATEGORIES, upload } from "@/lib/site";
+import {
+  CONTACT,
+  HERO_VIDEO,
+  LOGO,
+  SERIES_CATEGORIES,
+  SITE_NAME,
+  SITE_URL,
+  upload,
+} from "@/lib/site";
 import {
   getCategories,
   getPage,
+  getPages,
   getProductLines,
   getProducts,
   type Product,
   type ProductLine,
 } from "@/lib/wordpress";
 import type { Metadata } from "next";
+import { buildMetadata, wpPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const front = await getPage("dog-water-fountains");
-  return {
-    title: { absolute: front?.seo.title ?? "Dog Water Fountains | Cool Dog Water Fountains" },
-    description: front?.seo.description,
-    alternates: { canonical: "/" },
-    openGraph: front?.seo.image ? { images: [front.seo.image] } : undefined,
-  };
+  const [front, pages] = await Promise.all([getPage("dog-water-fountains"), getPages()]);
+  if (!front) {
+    return buildMetadata({
+      title: "Dog Water Fountains | Cool Dog Water Fountains",
+      description: "Quality dog water fountains for dog parks, apartments, HOAs and vet clinics.",
+      path: "/",
+    });
+  }
+  return wpPageMetadata(front, pages, { path: "/" });
 }
 
 const FEATURES = [
@@ -96,8 +108,27 @@ export default async function HomePage() {
     { id: "shelter", label: "Shelter Strong", items: inCategory("shelter-strong") },
   ].filter((t) => t.items.length > 0);
 
+  // Structured data for search engines.
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: `${SITE_URL}/`,
+      logo: LOGO.src,
+      telephone: `+1-${CONTACT.phone.replace(/\./g, "-")}`,
+      email: CONTACT.email,
+      parentOrganization: { "@type": "Organization", name: "The Dog Park Company" },
+    },
+    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: `${SITE_URL}/` },
+  ];
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       {/* ---------------- Hero ---------------- */}
       <section className="relative isolate flex min-h-[min(78svh,820px)] items-end overflow-hidden bg-deep text-white lg:min-h-[min(86svh,960px)]">
         <Image
@@ -284,7 +315,10 @@ export default async function HomePage() {
       </section>
 
       {/* ---------------- Feature band ---------------- */}
-      <section className="border-b border-line bg-white">
+      <section className="border-b border-line bg-white" aria-labelledby="why-heading">
+        <h2 id="why-heading" className="sr-only">
+          Why Cool Dog water fountains
+        </h2>
         <div className="mx-auto grid max-w-[1600px] gap-px bg-line sm:grid-cols-2 lg:grid-cols-5">
           {FEATURES.map(({ icon: Icon, title, text }, i) => (
             <div key={title} className="bg-white px-6 py-12 lg:px-8">

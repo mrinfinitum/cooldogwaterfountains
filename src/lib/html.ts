@@ -32,11 +32,32 @@ export function decodeEntities(text: string): string {
 
 /** Strip all tags and collapse whitespace. */
 export function toPlainText(html: string, maxLength?: number): string {
-  const text = decodeEntities(sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }))
+  // Decode twice: WordPress sometimes double-encodes (&amp;#8211;).
+  const text = decodeEntities(
+    decodeEntities(sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })),
+  )
+    .replace(/@ET-DC@[A-Za-z0-9+/=]+@/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (!maxLength || text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).replace(/\s+\S*$/, "")}…`;
+}
+
+/** The first paragraph with real sentence content (for meta descriptions). */
+export function firstParagraph(html: string): string | undefined {
+  for (const [, inner] of html.matchAll(/<p>([\s\S]*?)<\/p>/g)) {
+    const text = toPlainText(inner);
+    if (
+      text.length >= 60 &&
+      /[a-z]{3}/.test(text) &&
+      !/manufactured for easy installation/i.test(text)
+    ) {
+      return text;
+    }
+  }
+  // No paragraph tags: use the body text with headings left out.
+  const body = toPlainText(html.replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/g, " "));
+  return body.length >= 60 ? body : undefined;
 }
 
 // Elements with nothing inside but whitespace or line breaks (Divi leaves many).
@@ -70,7 +91,10 @@ export function toLocalHref(href: string): string {
  * Divi wrappers, inline styles and scripts are removed; headings, text,
  * lists, images, tables and links are kept.
  */
-export function cleanWpHtml(html: string, options: { images?: boolean } = {}): string {
+export function cleanWpHtml(
+  html: string,
+  options: { images?: boolean; topHeading?: number } = {},
+): string {
   const allowImages = options.images ?? true;
 
   const cleaned = sanitizeHtml(renderDivi(html), {
@@ -150,10 +174,28 @@ export function cleanWpHtml(html: string, options: { images?: boolean } = {}): s
     },
   });
 
-  return removeEmptyElements(cleaned)
+  return normalizeHeadings(removeEmptyElements(cleaned), options.topHeading ?? 2)
     .replace(/(<br\s*\/?>\s*){3,}/g, "<br /><br />")
     .replace(/\n{2,}/g, "\n")
     .trim();
+}
+
+/**
+ * Keep the heading outline valid: content starts at `top` (the page title is
+ * the only h1) and never skips a level going down (h2 → h4 becomes h2 → h3).
+ */
+export function normalizeHeadings(html: string, top = 2): string {
+  let previous = top - 1;
+  let current = top;
+  return html.replace(
+    /<(\/?)h([1-6])\b([^>]*)>/gi,
+    (_m, closing: string, level: string, rest: string) => {
+      if (closing) return `</h${current}>`;
+      current = Math.max(top, Math.min(Number(level), previous + 1, 6));
+      previous = current;
+      return `<h${current}${rest}>`;
+    },
+  );
 }
 
 export function formatPrice(minorUnits: number, minorUnit = 2): string {

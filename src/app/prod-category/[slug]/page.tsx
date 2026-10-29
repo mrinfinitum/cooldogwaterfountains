@@ -5,7 +5,8 @@ import CategoryNav from "@/components/CategoryNav";
 import PageHero, { PageHeroSkeleton } from "@/components/PageHero";
 import ProductCard from "@/components/ProductCard";
 import QuoteCta from "@/components/QuoteCta";
-import { getCategories, getProducts, getSeo } from "@/lib/wordpress";
+import { categoryMetadata } from "@/lib/seo";
+import { getAllSeo, getCategories, getProducts, getSeo } from "@/lib/wordpress";
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -16,15 +17,16 @@ export async function generateMetadata({
   params,
 }: PageProps<"/prod-category/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const [categories, seo] = await Promise.all([getCategories(), getSeo("product_cat", slug)]);
+  const [categories, products, seo, allSeo] = await Promise.all([
+    getCategories(),
+    getProducts(),
+    getSeo("product_cat", slug),
+    getAllSeo("product_cat"),
+  ]);
   const category = categories.find((c) => c.slug === slug);
   if (!category) return {};
-  return {
-    title: seo.title ? { absolute: seo.title } : category.name,
-    description: seo.description ?? (category.description || undefined),
-    alternates: { canonical: `/prod-category/${category.slug}/` },
-    openGraph: category.image ? { images: [category.image.src] } : undefined,
-  };
+  const count = products.filter((p) => p.categories.some((c) => c.slug === slug)).length;
+  return categoryMetadata(category, count, seo, allSeo);
 }
 
 async function CategoryContent({ params }: Pick<PageProps<"/prod-category/[slug]">, "params">) {
@@ -49,6 +51,7 @@ async function CategoryContent({ params }: Pick<PageProps<"/prod-category/[slug]
       </PageHero>
       <div className="mx-auto max-w-[1600px] px-4 py-12 lg:px-8 lg:py-16">
         <CategoryNav categories={categories} active={slug} />
+        <h2 className="sr-only">{category.name.replace(/^COOL DOG\s+/i, "")} models</h2>
         <div className="mt-12 grid grid-cols-1 gap-x-4 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((p, i) => (
             <ProductCard key={p.id} product={p} priority={i < 4} />

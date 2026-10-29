@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import PageHero, { PageHeroSkeleton } from "@/components/PageHero";
 import QuoteCta from "@/components/QuoteCta";
 import WpContent from "@/components/WpContent";
+import { wpPageMetadata } from "@/lib/seo";
 import { RESERVED_PAGE_SLUGS, getPage, getPages } from "@/lib/wordpress";
 
 export async function generateStaticParams() {
@@ -13,14 +14,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const page = RESERVED_PAGE_SLUGS.has(slug) ? null : await getPage(slug);
+  const pages = await getPages();
+  const page = RESERVED_PAGE_SLUGS.has(slug) ? undefined : pages.find((p) => p.slug === slug);
   if (!page) return {};
-  return {
-    title: page.seo.title ? { absolute: page.seo.title } : page.title,
-    description: page.seo.description,
-    alternates: { canonical: `/${page.slug}/` },
-    openGraph: page.seo.image ? { images: [page.seo.image] } : undefined,
-  };
+  const metadata = wpPageMetadata(page, pages);
+  // Form confirmation page: keep it out of search results.
+  return page.slug === "success"
+    ? { ...metadata, robots: { index: false, follow: true } }
+    : metadata;
 }
 
 // The site footer and the quote banner already carry this boilerplate.

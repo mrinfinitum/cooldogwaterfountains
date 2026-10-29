@@ -5,15 +5,22 @@ import PageHero from "@/components/PageHero";
 import QuoteForm from "@/components/QuoteForm";
 import { MailIcon, PhoneIcon } from "@/components/icons";
 import { CONTACT, upload } from "@/lib/site";
-import { getPage, getProducts } from "@/lib/wordpress";
+import { buildMetadata, wpPageMetadata } from "@/lib/seo";
+import { getPages, getProducts } from "@/lib/wordpress";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getPage("contact-us");
-  return {
-    title: page?.seo.title ? { absolute: page.seo.title } : "Contact Us",
-    description: page?.seo.description,
-    alternates: { canonical: "/contact-us/" },
-  };
+  const pages = await getPages();
+  const page = pages.find((p) => p.slug === "contact-us");
+  return page
+    ? wpPageMetadata(page, pages, {
+        description:
+          "Contact Cool Dog Water Fountains for contractor pricing, volume quotes, colors and installation help. Call 800.931.1562 or email sales@gymsfordogs.com.",
+      })
+    : buildMetadata({
+        title: "Contact Us | Build a Quote | Cool Dog Water Fountains",
+        description: "Request contractor pricing on dog water fountains.",
+        path: "/contact-us/",
+      });
 }
 
 export default async function ContactPage() {

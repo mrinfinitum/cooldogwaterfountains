@@ -50,6 +50,19 @@ studio version simply show the original from WordPress.
 Each color option shows the fountain in that color: the option's own photo if it has one,
 otherwise the gallery photo whose file name names the color (e.g. `…-BlueAqua-WM.jpg`).
 
+## SEO
+
+- **Titles & descriptions** come from Yoast when they are specific to the page. Missing ones,
+  WordPress defaults ("… Archives") and templated or duplicated ones are replaced with
+  page-specific text (`src/lib/seo.ts`). Every page also gets a canonical URL plus Open Graph
+  and Twitter tags.
+- **Headings**: one `h1` per page (the page/product title); WordPress content is re-leveled so
+  it never skips a level.
+- **`/sitemap.xml`** lists every page, category and product with their images.
+- **`/llms.txt`** is a plain-language map of the site and catalog for AI assistants
+  ([llmstxt.org](https://llmstxt.org)), built from the same WordPress data.
+- Structured data: `Product` on product pages, `Organization` and `WebSite` on the homepage.
+
 ## Routes
 
 | URL | Page |
