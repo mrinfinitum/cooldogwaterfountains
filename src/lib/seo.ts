@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { firstParagraph, formatPrice, toPlainText } from "./html";
+import { toPlainText, type PortableTextBlock } from "next-sanity";
+import { formatPrice } from "./format";
 import { SITE_NAME, SITE_URL } from "./site";
-import type { Product, ProductCategory, Seo, WpPage } from "./wordpress";
+import type { Page, Product, ProductCategory } from "./content";
 
 const TITLE_MAX = 60;
 const DESC_MIN = 70;
@@ -40,12 +41,14 @@ export function buildMetadata({
   path,
   image,
   type = "website",
+  noindex = false,
 }: {
   title: string;
   description: string;
   path: string;
   image?: string;
   type?: "website" | "article";
+  noindex?: boolean;
 }): Metadata {
   const t = fitTitle(title);
   const d = fitDescription(description);
@@ -64,6 +67,7 @@ export function buildMetadata({
       images,
     },
     twitter: { card: images ? "summary_large_image" : "summary", title: t, description: d, images },
+    ...(noindex ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -73,78 +77,61 @@ const shortName = (name: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/** Yoast values that are missing, WordPress defaults ("… Archives"), or shared with other items. */
-const usable = (value: string | undefined, all: (string | undefined)[]) =>
-  value && !/\barchives\b/i.test(value) && all.filter((v) => v === value).length === 1
-    ? value
-    : undefined;
+/** First paragraph of rich text with real sentence content. */
+function firstParagraph(blocks: PortableTextBlock[]): string | undefined {
+  for (const block of blocks) {
+    if (block._type !== "block" || (block.style && block.style !== "normal")) continue;
+    const text = toPlainText([block]).trim();
+    if (text.length >= 60 && /[a-z]{3}/.test(text)) return text;
+  }
+  return undefined;
+}
 
-/**
- * Like `usable`, but also rejects templated descriptions: "Name | tagline"
- * patterns, or ones ending with the same sentence as several others.
- */
-const usableDescription = (value: string | undefined, all: (string | undefined)[]) => {
-  const ok = usable(value, all);
-  if (!ok || /\s\|\s/.test(ok)) return undefined;
-  const ending = ok.slice(-45);
-  return all.filter((v) => v?.endsWith(ending)).length > 1 ? undefined : ok;
-};
-
-const titlesOf = (all: Seo[]) => all.map((s) => s.title);
-const descriptionsOf = (all: Seo[]) => all.map((s) => s.description);
-
-export function productMetadata(product: Product, seo: Seo, allSeo: Seo[]): Metadata {
+export function productMetadata(product: Product): Metadata {
   const name = shortName(product.name);
   const colors = product.colors.length;
   const generated = `${name}: ${formatPrice(product.price)} contractor price${
     colors ? `, ${colors} ${colors === 1 ? "color" : "colors"}` : ""
   }. Made in the USA for dog parks, apartments and HOAs.`;
   return buildMetadata({
-    title: usable(seo.title, titlesOf(allSeo)) ?? `${name} | ${SITE_NAME}`,
-    description: usableDescription(seo.description, descriptionsOf(allSeo)) ?? generated,
+    title: product.seo.title || `${name} | ${SITE_NAME}`,
+    description: product.seo.description || generated,
     path: `/fountain/${product.slug}/`,
     image: product.images[0]?.src,
+    noindex: product.seo.noindex,
   });
 }
 
-export function categoryMetadata(
-  category: ProductCategory,
-  productCount: number,
-  seo: Seo,
-  allSeo: Seo[],
-): Metadata {
+export function categoryMetadata(category: ProductCategory, productCount: number): Metadata {
   const name = shortName(category.name);
-  const own = category.description.length >= DESC_MIN ? category.description : undefined;
   const generated = `Shop ${name} dog water fountains: ${productCount} ${
     productCount === 1 ? "model" : "models"
   } with contractor pricing for dog parks, apartments, HOAs and vet clinics.`;
   return buildMetadata({
-    title: usable(seo.title, titlesOf(allSeo)) ?? `${name} | ${SITE_NAME}`,
-    description: usableDescription(seo.description, descriptionsOf(allSeo)) ?? own ?? generated,
+    title: category.seo.title || `${name} | ${SITE_NAME}`,
+    description:
+      category.seo.description ||
+      (category.description.length >= DESC_MIN ? category.description : generated),
     path: `/prod-category/${category.slug}/`,
     image: category.image?.src,
+    noindex: category.seo.noindex,
   });
 }
 
-/**
- * A WordPress page: its Yoast title and description when they are specific to
- * the page, otherwise the page title and its first real paragraph.
- */
-export function wpPageMetadata(
-  page: WpPage,
-  allPages: WpPage[],
+/** A content page: its SEO fields from Sanity, or ones built from its content. */
+export function pageMetadata(
+  page: Pick<Page, "title" | "slug" | "body" | "heroImage" | "seo">,
   options: { path?: string; description?: string } = {},
 ): Metadata {
-  const titles = allPages.map((p) => p.seo.title);
-  const descriptions = allPages.map((p) => p.seo.description);
   return buildMetadata({
-    title: usable(page.seo.title, titles) ?? `${page.title} | ${SITE_NAME}`,
+    title: page.seo.title || `${page.title} | ${SITE_NAME}`,
     description:
-      usableDescription(page.seo.description, descriptions) ??
-      options.description ??
-      firstParagraph(page.html) ??
-      toPlainText(page.html, DESC_MAX),
+      page.seo.description ||
+      options.description ||
+      firstParagraph(page.body) ||
+      `${page.title} – ${TAGLINE}`,
     path: options.path ?? `/${page.slug}/`,
-    image: page.seo.image ?? page.heroImage,
+    image: page.heroImage,
+    noindex: page.seo.noindex,
   });
 }

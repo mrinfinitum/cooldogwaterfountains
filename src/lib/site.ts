@@ -1,8 +1,4 @@
-// Site-wide settings. WordPress stays the CMS; this app is the front end.
-
-export const WP_URL = (
-  process.env.WORDPRESS_URL ?? "https://www.cooldogwaterfountains.com"
-).replace(/\/$/, "");
+// Site-wide settings. Content lives in Sanity; checkout runs on Stripe.
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.cooldogwaterfountains.com"
@@ -20,25 +16,23 @@ export const CONTACT = {
 };
 
 export const LOGO = {
-  src: `${WP_URL}/wp-content/uploads/2021/09/dog-water-foutains-logo.png`,
+  src: "/media/dog-water-foutains-logo.png",
   width: 791,
   height: 285,
 };
 
 // White-text version for dark backgrounds.
 export const LOGO_LIGHT = {
-  src: `${WP_URL}/wp-content/uploads/2022/01/cooldogwaterfountains_com_logo.png`,
+  src: "/media/cooldogwaterfountains_com_logo.png",
   width: 790,
   height: 269,
 };
 
-export const HERO_VIDEO = `${WP_URL}/wp-content/uploads/2025/01/1912203_Thirsty_Dog_1920x1080.mp4`;
+export const HERO_VIDEO = "/media/hero-dog-drinking.mp4";
+export const HERO_POSTER = "/media/hero-dog-drinking-poster.jpg";
 
-export const upload = (path: string) => `${WP_URL}/wp-content/uploads/${path}`;
-
-// Cart, checkout and accounts stay on WordPress / WooCommerce.
-export const cartUrl = () => `${WP_URL}/cart/`;
-export const checkoutUrl = () => `${WP_URL}/checkout/`;
+/** Design images and media stored with the site in /public/media/. */
+export const media = (file: string) => `/media/${file}`;
 
 export const RESOURCE_LINKS = [
   { href: "/dog-water-fountain-colors/", label: "Colors" },
@@ -61,11 +55,4 @@ export const COMPANY_LINKS = [
 export const LEGAL_LINKS = [
   { href: "/dog-water-fountains-policy/", label: "Privacy Policy" },
   { href: "/dog-water-fountains-terms/", label: "Terms & Conditions" },
-];
-
-// Category slugs that describe a series rather than a product type.
-export const SERIES_CATEGORIES = [
-  "dog-water-fountain-sst",
-  "dog-water-fountain-slv",
-  "shelter-strong",
 ];

@@ -46,3 +46,6 @@ next-env.d.ts
 
 # studio photo build cache
 /.photo-cache
+
+# one-time Sanity import cache
+/.migrate-cache

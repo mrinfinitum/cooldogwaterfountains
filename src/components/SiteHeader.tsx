@@ -1,22 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCategories } from "@/lib/wordpress";
-import {
-  CONTACT,
-  COMPANY_LINKS,
-  LOGO,
-  RESOURCE_LINKS,
-  SERIES_CATEGORIES,
-  cartUrl,
-  upload,
-} from "@/lib/site";
-import { CartIcon, ChevronIcon, PhoneIcon } from "./icons";
+import { getCategories } from "@/lib/content";
+import CartButton from "./cart/CartButton";
+import { CONTACT, COMPANY_LINKS, LOGO, RESOURCE_LINKS, media } from "@/lib/site";
+import { ChevronIcon, PhoneIcon } from "./icons";
 import MobileMenu from "./MobileMenu";
 
 export default async function SiteHeader() {
   const categories = await getCategories();
-  const types = categories.filter((c) => !SERIES_CATEGORIES.includes(c.slug));
-  const series = categories.filter((c) => SERIES_CATEGORIES.includes(c.slug));
+  const types = categories.filter((c) => !c.isSeries);
+  const series = categories.filter((c) => c.isSeries);
   const featured = types.filter((c) => c.image).slice(0, 2);
 
   return (
@@ -128,7 +121,7 @@ export default async function SiteHeader() {
                         className="group/card relative block aspect-[16/9] overflow-hidden bg-foam"
                       >
                         <Image
-                          src={upload("2025/02/DL-2000-STE-BLU-lifestyle.jpg")}
+                          src={media("DL-2000-STE-BLU-lifestyle.jpg")}
                           alt="A dog drinking from a blue Cool Dog fountain"
                           fill
                           sizes="500px"
@@ -144,7 +137,7 @@ export default async function SiteHeader() {
                         className="group/card relative block aspect-[16/9] overflow-hidden bg-foam"
                       >
                         <Image
-                          src={upload("2025/01/DSC_9804_WM-scaled-1.jpg")}
+                          src={media("DSC_9804_WM-scaled-1.jpg")}
                           alt="A shaded dog park with turf and agility equipment"
                           fill
                           sizes="500px"
@@ -203,9 +196,7 @@ export default async function SiteHeader() {
           <Link href="/contact-us/" className="btn btn-primary hidden min-h-10 px-5 lg:inline-flex">
             Build a Quote
           </Link>
-          <a href={cartUrl()} aria-label="Cart" className="hover:text-teal">
-            <CartIcon width={22} height={22} />
-          </a>
+          <CartButton />
         </div>
       </div>
     </header>

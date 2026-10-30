@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
 import { swatchColor } from "@/lib/colors";
-import type { ColorOption, Product } from "@/lib/wordpress";
+import type { ColorOption, Product } from "@/lib/content";
 
 /** The product fields a card needs (kept small: it is sent to the browser). */
 export type CardProduct = Pick<
@@ -102,7 +102,7 @@ export default function ProductCardView({
                 className={`size-4 rounded-full border border-black/10 outline-offset-2 transition ${
                   preview?.id === option.id ? "outline-2 outline-teal" : ""
                 }`}
-                style={{ background: swatchColor(option.color) }}
+                style={{ background: option.swatch ?? swatchColor(option.color) }}
               />
             ))}
             <span className="eyebrow ml-1 text-[10px] text-muted">

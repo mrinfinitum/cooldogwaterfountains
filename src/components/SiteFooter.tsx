@@ -2,42 +2,34 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cacheLife } from "next/cache";
-import { getCategories } from "@/lib/wordpress";
-import {
-  CONTACT,
-  COMPANY_LINKS,
-  LEGAL_LINKS,
-  LOGO_LIGHT,
-  RESOURCE_LINKS,
-  SERIES_CATEGORIES,
-  upload,
-} from "@/lib/site";
+import { getCategories } from "@/lib/content";
+import { CONTACT, COMPANY_LINKS, LEGAL_LINKS, LOGO_LIGHT, RESOURCE_LINKS, media } from "@/lib/site";
 import { Wave } from "./icons";
 
 const PARTNERS = [
   {
     href: "https://www.thedogparkcompany.com",
-    src: "2025/02/icon-pet-care-leaders.png",
+    src: "icon-pet-care-leaders.png",
     alt: "Pet care leaders",
   },
   {
     href: "http://www.dogparkveterinarians.com/",
-    src: "2025/02/icon-find-a-vet.png",
+    src: "icon-find-a-vet.png",
     alt: "Find a vet",
   },
   {
     href: "https://www.dogparkadventures.com",
-    src: "2025/02/icon-find-a-dog-park.png",
+    src: "icon-find-a-dog-park.png",
     alt: "Find a dog park",
   },
   {
     href: "https://www.petfinder.com/",
-    src: "2025/02/icon-find-adopt-a-dog.png",
+    src: "icon-find-adopt-a-dog.png",
     alt: "Find and adopt a dog",
   },
   {
     href: "https://www.dogsnaturallymagazine.com/blog/",
-    src: "2025/02/pet-wellness.png",
+    src: "pet-wellness.png",
     alt: "Pet wellness",
   },
 ];
@@ -50,7 +42,7 @@ async function CopyrightYear() {
 
 export default async function SiteFooter() {
   const categories = await getCategories();
-  const types = categories.filter((c) => !SERIES_CATEGORIES.includes(c.slug));
+  const types = categories.filter((c) => !c.isSeries);
 
   return (
     <footer className="relative bg-ink text-white">
@@ -150,7 +142,7 @@ export default async function SiteFooter() {
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-center gap-x-10 gap-y-6 border-t border-white/10 px-4 py-10 lg:justify-between lg:px-8">
         <a href="https://www.thedogparkcompany.com" target="_blank" rel="noopener noreferrer">
           <Image
-            src={upload("2025/02/TDPC_Logo.png")}
+            src={media("TDPC_Logo.png")}
             alt="The Dog Park Company"
             width={639}
             height={82}
@@ -161,7 +153,7 @@ export default async function SiteFooter() {
           {PARTNERS.map((p) => (
             <a key={p.src} href={p.href} target="_blank" rel="noopener noreferrer">
               <Image
-                src={upload(p.src)}
+                src={media(p.src)}
                 alt={p.alt}
                 width={500}
                 height={699}

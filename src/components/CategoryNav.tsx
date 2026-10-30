@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ProductCategory } from "@/lib/wordpress";
+import type { ProductCategory } from "@/lib/content";
 
 /** Pill row linking between product categories. */
 export default function CategoryNav({

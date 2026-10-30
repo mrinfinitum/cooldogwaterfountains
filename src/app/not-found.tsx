@@ -1,9 +1,10 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import SiteChrome from "@/components/SiteChrome";
 
 export default function NotFound() {
   return (
-    <>
+    <SiteChrome>
       <PageHero eyebrow="404 · Page not found" title="This trail ran dry">
         <p className="mt-6 max-w-xl text-lg text-white/85">
           The page you&apos;re looking for has moved or no longer exists.
@@ -21,6 +22,6 @@ export default function NotFound() {
         </div>
       </PageHero>
       <div className="h-24" />
-    </>
+    </SiteChrome>
   );
 }

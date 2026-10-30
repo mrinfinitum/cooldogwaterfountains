@@ -1,4 +1,4 @@
-import { formatPrice } from "@/lib/html";
+import { formatPrice } from "@/lib/format";
 
 export default function Price({
   price,

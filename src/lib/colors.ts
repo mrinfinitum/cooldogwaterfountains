@@ -1,4 +1,4 @@
-// Swatch colors for the fountain finishes named in WooCommerce.
+// Fallback swatch colors by finish name (used when a color has no swatch set in Sanity).
 const SWATCHES: [RegExp, string][] = [
   [/silver|grey|gray/i, "#b9c0c4"],
   [/aqua/i, "#3fb7c9"],
@@ -15,27 +15,4 @@ const SWATCHES: [RegExp, string][] = [
 
 export function swatchColor(name: string): string {
   return SWATCHES.find(([pattern]) => pattern.test(name))?.[1] ?? "#cddfdd";
-}
-
-// Words used in photo file names for each finish, e.g. "…-SLV-BlueAqua-WM.jpg".
-const PHOTO_NAMES: [color: RegExp, filename: RegExp][] = [
-  [/bone|white/i, /bone-?white|white/i],
-  [/speckled|earth/i, /speck|earth/i],
-  [/pink/i, /pink/i],
-  [/mustard/i, /mustard/i],
-  [/yellow/i, /ylw|yellow/i],
-  [/green/i, /green|grn|greee/i],
-  [/aqua|blue/i, /aqua|blu/i],
-  [/silver|grey|gray/i, /silver|slv-slv/i],
-];
-
-// Paint-chip and color-card images rather than photos of a fountain.
-const CHIP = /cool-dog-water-fountains-|tiger|ral-\d|spackle|pearl|custom-?colors/i;
-
-/** Whether a photo's file name says it shows the fountain in this color. */
-export function photoMatchesColor(url: string, color: string): boolean {
-  const file = decodeURIComponent(url.split("/").pop() ?? "");
-  if (CHIP.test(file)) return false;
-  const entry = PHOTO_NAMES.find(([c]) => c.test(color));
-  return entry ? entry[1].test(file) : false;
 }

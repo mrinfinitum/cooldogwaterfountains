@@ -1,4 +1,4 @@
-import type { Product } from "@/lib/wordpress";
+import type { Product } from "@/lib/content";
 import ProductCardView from "./ProductCardView";
 
 /** Product tile for grids; passes only what the card needs to the browser. */

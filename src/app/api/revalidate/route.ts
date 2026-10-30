@@ -2,10 +2,10 @@ import { timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 
 /**
- * Called by WordPress when content changes, so the site refreshes right away
- * instead of waiting for the hourly cache to expire.
+ * Called by a Sanity webhook whenever content is published, so the site
+ * refreshes right away instead of waiting for the hourly cache to expire.
  *
- *   POST /api/revalidate
+ *   POST /api/revalidate/
  *   Header: x-revalidate-secret: <REVALIDATE_SECRET>
  */
 export async function POST(request: Request) {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return Response.json({ revalidated: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  revalidateTag("wordpress", "max");
+  revalidateTag("sanity", "max");
   return Response.json({ revalidated: true });
 }
 

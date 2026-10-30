@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { swatchColor } from "@/lib/colors";
-import type { ColorOption, ProductImage } from "@/lib/wordpress";
+import { addToCart } from "@/lib/cart";
+import type { ColorOption, ProductImage } from "@/lib/content";
 import { CONTACT } from "@/lib/site";
 import Price from "./Price";
 import { DropIcon, FlagIcon, PhoneIcon, RulerIcon } from "./icons";
@@ -20,8 +22,7 @@ type Props = {
   inStock: boolean;
   images: ProductImage[];
   variations: ColorOption[];
-  wpUrl: string;
-  productId: number;
+  slug: string;
   children?: ReactNode;
 };
 
@@ -38,8 +39,7 @@ const useQueryString = () =>
   );
 
 export default function ProductView(props: Props) {
-  const { name, sku, series, summary, images, variations, wpUrl, productId, inStock, children } =
-    props;
+  const { name, slug, sku, series, summary, images, variations, inStock, children } = props;
 
   // A product card can link here with ?color=… to open on that color.
   const query = useQueryString();
@@ -73,12 +73,18 @@ export default function ProductView(props: Props) {
   const price = variation?.price ?? props.price;
   const regularPrice = variation?.regularPrice ?? props.regularPrice;
 
-  const cartParams = new URLSearchParams({
-    "add-to-cart": String(variation?.id ?? productId),
-    quantity: String(quantity),
-    ...(variation ? { attribute_color: variation.color } : {}),
-  });
-  const addToCartHref = `${wpUrl}/cart/?${cartParams}`;
+  const router = useRouter();
+  const onAddToCart = () => {
+    addToCart({
+      slug,
+      color: variation?.color,
+      quantity,
+      name,
+      price,
+      image: (variation?.image ?? images[0])?.src,
+    });
+    router.push("/cart/");
+  };
   const quoteHref = `/contact-us/?${new URLSearchParams({
     product: name,
     ...(variation ? { color: variation.color } : {}),
@@ -165,7 +171,7 @@ export default function ProductView(props: Props) {
                         ? "outline-2 outline-teal"
                         : "hover:outline-1 hover:outline-ink/40"
                     }`}
-                    style={{ background: swatchColor(v.color) }}
+                    style={{ background: v.swatch ?? swatchColor(v.color) }}
                   />
                 ))}
               </div>
@@ -195,9 +201,9 @@ export default function ProductView(props: Props) {
               </button>
             </div>
             {inStock ? (
-              <a href={addToCartHref} className="btn btn-primary flex-1">
+              <button type="button" onClick={onAddToCart} className="btn btn-primary flex-1">
                 Add to Cart
-              </a>
+              </button>
             ) : (
               <span className="btn flex-1 cursor-not-allowed bg-line text-muted">Out of Stock</span>
             )}

@@ -1,64 +1,49 @@
-import { formatPrice } from "@/lib/html";
-import { categoryMetadata, productMetadata, wpPageMetadata } from "@/lib/seo";
-import { CONTACT, SERIES_CATEGORIES, SITE_NAME, SITE_URL } from "@/lib/site";
-import {
-  RESERVED_PAGE_SLUGS,
-  getAllSeo,
-  getCategories,
-  getPages,
-  getProducts,
-  getSeo,
-} from "@/lib/wordpress";
+import { getCategories, getPages, getProducts } from "@/lib/content";
+import { formatPrice } from "@/lib/format";
+import { categoryMetadata, pageMetadata, productMetadata } from "@/lib/seo";
+import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
  * /llms.txt — a plain-language map of the site for AI assistants
- * (https://llmstxt.org). Built from the same WordPress data as the pages.
+ * (https://llmstxt.org). Built from the same Sanity content as the pages.
  */
 export async function GET() {
-  const [products, categories, pages, productSeo, categorySeo] = await Promise.all([
+  const [products, categories, pages] = await Promise.all([
     getProducts(),
     getCategories(),
     getPages(),
-    getAllSeo("product"),
-    getAllSeo("product_cat"),
   ]);
 
   const text = (value: unknown) => String(value ?? "");
   const link = (label: string, path: string, note?: string) =>
     `- [${label}](${SITE_URL}${path})${note ? `: ${note}` : ""}`;
 
-  const productLines = await Promise.all(
-    products.map(async (p) => {
-      const meta = productMetadata(p, await getSeo("product", p.slug), productSeo);
-      const price =
-        p.regularPrice > p.price
-          ? `${formatPrice(p.price)} contractor price (list ${formatPrice(p.regularPrice)})`
-          : formatPrice(p.price);
-      const colors = p.colors.length ? ` Colors: ${p.colors.join(", ")}.` : "";
-      return link(
-        p.name,
-        `/fountain/${p.slug}/`,
-        `${price}. SKU ${p.sku}.${colors} ${text(meta.description)}`,
-      );
-    }),
-  );
+  const productLines = products.map((p) => {
+    const meta = productMetadata(p);
+    const price =
+      p.regularPrice > p.price
+        ? `${formatPrice(p.price)} contractor price (list ${formatPrice(p.regularPrice)})`
+        : formatPrice(p.price);
+    const colors = p.colors.length ? ` Colors: ${p.colors.join(", ")}.` : "";
+    return link(
+      p.name,
+      `/fountain/${p.slug}/`,
+      `${price}. SKU ${p.sku}.${colors} ${text(meta.description)}`,
+    );
+  });
 
-  const lineCategories = categories.filter((c) => !SERIES_CATEGORIES.includes(c.slug));
-  const seriesCategories = categories.filter((c) => SERIES_CATEGORIES.includes(c.slug));
-  const categoryLine = async (c: (typeof categories)[number]) => {
+  const lineCategories = categories.filter((c) => !c.isSeries);
+  const seriesCategories = categories.filter((c) => c.isSeries);
+  const categoryLine = (c: (typeof categories)[number]) => {
     const count = products.filter((p) => p.categories.some((pc) => pc.slug === c.slug)).length;
-    const meta = categoryMetadata(c, count, await getSeo("product_cat", c.slug), categorySeo);
+    const meta = categoryMetadata(c, count);
     return link(c.name, `/prod-category/${c.slug}/`, text(meta.description));
   };
 
-  const contentPages = pages.filter(
-    (p) => !RESERVED_PAGE_SLUGS.has(p.slug) && p.slug !== "success",
-  );
+  const contentPages = pages.filter((p) => p.slug !== "contact-us" && !p.seo.noindex);
   const pageLine = (slug: string) => {
     const page = contentPages.find((p) => p.slug === slug);
-    return page
-      ? link(page.title, `/${page.slug}/`, text(wpPageMetadata(page, pages).description))
-      : null;
+    return page ? link(page.title, `/${page.slug}/`, text(pageMetadata(page).description)) : null;
   };
   const guides = [
     "dog-water-fountain-colors",
@@ -81,7 +66,7 @@ export async function GET() {
     "- Color Play® program: standard colors plus custom colors.",
     "- Installation and assembly available across the USA; most maintenance or construction staff can install the fountains.",
     `- Sales and quotes: ${CONTACT.phone} · ${CONTACT.email} · ${CONTACT.hours}, ${CONTACT.days}.`,
-    `- Online ordering: add a product to the cart on any product page. Volume and project quotes: ${SITE_URL}/contact-us/`,
+    `- Online ordering: card checkout on the site (Stripe), with sales tax calculated at checkout and shipping at 12% of the order. Volume and project quotes: ${SITE_URL}/contact-us/`,
     "",
     "## Products",
     "",
@@ -89,11 +74,11 @@ export async function GET() {
     "",
     "## Product lines",
     "",
-    ...(await Promise.all(lineCategories.map(categoryLine))),
+    ...lineCategories.map(categoryLine),
     "",
     "## Series",
     "",
-    ...(await Promise.all(seriesCategories.map(categoryLine))),
+    ...seriesCategories.map(categoryLine),
     "",
     "## Planning, installation and specifications",
     "",
