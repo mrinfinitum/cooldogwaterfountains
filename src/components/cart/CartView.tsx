@@ -40,8 +40,12 @@ export default function CartView() {
                 <Link href={`/fountain/${item.slug}/`} className="font-medium hover:text-teal">
                   {item.name}
                 </Link>
-                {item.color && (
-                  <p className="eyebrow text-[11px] text-muted">Color: {item.color}</p>
+                {(item.color || item.sku) && (
+                  <p className="eyebrow text-[11px] text-muted">
+                    {[item.color && `Color: ${item.color}`, item.sku && `SKU ${item.sku}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 )}
                 <p className="text-[15px]">{formatPrice(item.price)}</p>
                 <div className="mt-auto flex items-center gap-4">

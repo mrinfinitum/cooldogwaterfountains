@@ -78,6 +78,7 @@ export default function ProductView(props: Props) {
     addToCart({
       slug,
       color: variation?.color,
+      sku: variation?.sku ?? sku,
       quantity,
       name,
       price,
@@ -138,7 +139,7 @@ export default function ProductView(props: Props) {
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-28">
           <p className="eyebrow text-muted">
-            {series ? `${series} Series · ` : ""}SKU {sku}
+            {series ? `${series} Series · ` : ""}SKU {variation?.sku ?? sku}
           </p>
           <h1 className="headline mt-3 text-5xl text-deep lg:text-6xl">{name}</h1>
 

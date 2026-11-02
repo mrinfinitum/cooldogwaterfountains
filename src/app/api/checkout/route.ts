@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       );
     }
     const unitAmount = option?.price ?? product.price;
+    const sku = option?.sku ?? product.sku;
     const image = option?.image?.src ?? product.images[0]?.src;
     subtotal += unitAmount * quantity;
     lineItems.push({
@@ -54,10 +55,10 @@ export async function POST(request: Request) {
         tax_behavior: "exclusive" as const,
         product_data: {
           name: option ? `${product.name} – ${option.color}` : product.name,
-          ...(product.sku ? { description: `SKU ${product.sku}` } : {}),
+          ...(sku ? { description: `SKU ${sku}` } : {}),
           ...(image ? { images: [image] } : {}),
           tax_code: product.taxCode,
-          metadata: { slug: product.slug, sku: product.sku, color: option?.color ?? "" },
+          metadata: { slug: product.slug, sku, color: option?.color ?? "" },
         },
       },
     });

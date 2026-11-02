@@ -102,6 +102,13 @@ export const product = defineType({
           fields: [
             defineField({ name: "name", type: "string", validation: (r) => r.required() }),
             defineField({
+              name: "sku",
+              title: "SKU for this color",
+              type: "string",
+              description:
+                "Full SKU, usually the product SKU plus a color code (e.g. DL-1000-SST-BLU). Leave empty to use the product SKU.",
+            }),
+            defineField({
               name: "swatch",
               title: "Swatch color (hex)",
               type: "string",
@@ -121,7 +128,7 @@ export const product = defineType({
               description: "Leave empty to use the product price.",
             }),
           ],
-          preview: { select: { title: "name", media: "image", subtitle: "swatch" } },
+          preview: { select: { title: "name", media: "image", subtitle: "sku" } },
         }),
       ],
     }),

@@ -9,6 +9,8 @@ import { useSyncExternalStore } from "react";
 export type CartItem = {
   slug: string;
   color?: string;
+  /** For display. */
+  sku?: string;
   quantity: number;
   name: string;
   /** Unit price in cents, for display. */

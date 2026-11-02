@@ -19,6 +19,8 @@ export type ProductImage = { src: string; alt: string };
 export type ColorOption = {
   id: string;
   color: string;
+  /** This color's SKU (the product SKU when none is set). */
+  sku: string;
   swatch?: string;
   /** Prices in cents. */
   price: number;
@@ -90,7 +92,7 @@ const PRODUCTS = groq`*[_type == "product" && defined(slug.current)] | order(ord
   summary, description, taxCode, seo,
   "images": images[] ${IMAGE},
   "categories": categories[]->{ name, "slug": slug.current, "isSeries": coalesce(isSeries, false) },
-  "colors": colors[]{ _key, name, swatch, price, "image": image ${IMAGE} }
+  "colors": colors[]{ _key, name, sku, swatch, price, "image": image ${IMAGE} }
 }`;
 
 const CATEGORIES = groq`*[_type == "category" && defined(slug.current)] | order(order asc, name asc) {
@@ -131,7 +133,15 @@ type RawProduct = {
   images?: RawImage[];
   categories?: { name: string; slug: string; isSeries: boolean }[] | null;
   colors?:
-    { _key: string; name: string; swatch?: string; price?: number; image?: RawImage }[] | null;
+    | {
+        _key: string;
+        name: string;
+        sku?: string;
+        swatch?: string;
+        price?: number;
+        image?: RawImage;
+      }[]
+    | null;
 };
 
 const cents = (dollars: number | undefined) => Math.round((dollars ?? 0) * 100);
@@ -161,6 +171,7 @@ function mapProduct(p: RawProduct): Product {
       return {
         id: c._key,
         color: c.name,
+        sku: c.sku?.trim() || p.sku || "",
         swatch: c.swatch,
         price: optionPrice,
         regularPrice: c.price != null ? Math.max(optionPrice, regularPrice) : regularPrice,
