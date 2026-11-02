@@ -22,8 +22,8 @@ export async function GET() {
     const meta = productMetadata(p);
     const price =
       p.regularPrice > p.price
-        ? `${formatPrice(p.price)} contractor price (list ${formatPrice(p.regularPrice)})`
-        : formatPrice(p.price);
+        ? `Contractor Price ${formatPrice(p.price)} (Commercial List Price ${formatPrice(p.regularPrice)})`
+        : `Commercial List Price ${formatPrice(p.price)}`;
     const colors = p.colors.length ? ` Colors: ${p.colors.join(", ")}.` : "";
     return link(
       p.name,
