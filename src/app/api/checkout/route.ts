@@ -6,7 +6,8 @@ type RequestedItem = { slug?: unknown; color?: unknown; quantity?: unknown };
 
 /**
  * Creates a Stripe Checkout session for the cart.
- * Every item is re-priced from Sanity here: prices sent by the browser are ignored.
+ * Every item is re-priced from the CMS here: prices sent by the browser are ignored.
+ * The SKU in each line's product metadata lets the Stripe webhook record the order.
  */
 export async function POST(request: Request) {
   let body: { items?: RequestedItem[] };
@@ -40,6 +41,12 @@ export async function POST(request: Request) {
     if (color && !option) {
       return Response.json(
         { error: `${product.name} is not available in ${color}.` },
+        { status: 409 },
+      );
+    }
+    if (option && !option.inStock) {
+      return Response.json(
+        { error: `${product.name} in ${option.color} is out of stock.` },
         { status: 409 },
       );
     }

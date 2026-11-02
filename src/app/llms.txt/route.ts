@@ -5,7 +5,7 @@ import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
  * /llms.txt — a plain-language map of the site for AI assistants
- * (https://llmstxt.org). Built from the same Sanity content as the pages.
+ * (https://llmstxt.org). Built from the same CMS content as the pages.
  */
 export async function GET() {
   const [products, categories, pages] = await Promise.all([

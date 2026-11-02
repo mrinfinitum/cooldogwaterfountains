@@ -27,7 +27,7 @@ async function ContentPage({ params }: Pick<PageProps<"/[slug]">, "params">) {
     <>
       <PageHero eyebrow="Cool Dog Water Fountains" title={page.title} image={page.heroImage} />
       <article className="mx-auto max-w-4xl px-4 py-16 lg:py-24">
-        <RichText value={page.body} />
+        <RichText html={page.html} />
       </article>
     </>
   );

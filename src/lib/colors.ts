@@ -1,4 +1,4 @@
-// Fallback swatch colors by finish name (used when a color has no swatch set in Sanity).
+// Fallback swatch colors by finish name (used when a color has no swatch set in the CMS).
 const SWATCHES: [RegExp, string][] = [
   [/silver|grey|gray/i, "#b9c0c4"],
   [/aqua/i, "#3fb7c9"],

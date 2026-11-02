@@ -1,4 +1,4 @@
-// Site-wide settings. Content lives in Sanity; checkout runs on Stripe.
+// Site-wide settings. Content lives in the Headless Commerce CMS (WordPress); checkout runs on Stripe.
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.cooldogwaterfountains.com"

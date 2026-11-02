@@ -1,6 +1,6 @@
+import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
-import { groq, type PortableTextBlock } from "next-sanity";
-import { sanityClient } from "@/sanity/client";
+import { cms } from "./cms";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -22,9 +22,10 @@ export type ColorOption = {
   /** This color's SKU (the product SKU when none is set). */
   sku: string;
   swatch?: string;
-  /** Prices in cents. */
+  /** Prices in cents: Contractor Price (what the shopper pays) and Commercial List Price. */
   price: number;
   regularPrice: number;
+  inStock: boolean;
   /** The fountain photographed in this color. */
   image?: ProductImage;
 };
@@ -35,8 +36,9 @@ export type Product = {
   name: string;
   sku: string;
   summary: string;
-  description: PortableTextBlock[];
-  /** Prices in cents. */
+  /** Rendered HTML from the CMS. */
+  descriptionHtml: string;
+  /** Prices in cents: Contractor Price (what the shopper pays) and Commercial List Price. */
   price: number;
   regularPrice: number;
   onSale: boolean;
@@ -65,7 +67,8 @@ export type Page = {
   id: string;
   slug: string;
   title: string;
-  body: PortableTextBlock[];
+  /** Rendered HTML from the CMS. */
+  html: string;
   heroImage?: string;
   modified: string;
   seo: Seo;
@@ -79,120 +82,132 @@ export type ProductLine = {
   href: string;
 };
 
-export type HomePage = { productLines: ProductLine[]; seo: Seo };
+export type HomePage = { productLines: ProductLine[] };
 
 /* ------------------------------------------------------------------ */
-/* Queries                                                             */
+/* Headless Commerce CMS API (WordPress + WooCommerce)                 */
 /* ------------------------------------------------------------------ */
 
-const IMAGE = `{ "src": asset->url, "alt": coalesce(alt, "") }`;
+type RawImage = { src: string; alt: string; width: number | null; height: number | null } | null;
 
-const PRODUCTS = groq`*[_type == "product" && defined(slug.current)] | order(order asc, name asc) {
-  _id, name, "slug": slug.current, sku, price, compareAtPrice, priceLabel, inStock,
-  summary, description, taxCode, seo,
-  "images": images[] ${IMAGE},
-  "categories": categories[]->{ name, "slug": slug.current, "isSeries": coalesce(isSeries, false) },
-  "colors": colors[]{ _key, name, sku, swatch, price, "image": image ${IMAGE} }
-}`;
-
-const CATEGORIES = groq`*[_type == "category" && defined(slug.current)] | order(order asc, name asc) {
-  _id, name, "slug": slug.current, description, isSeries, seo,
-  "image": image ${IMAGE},
-  "count": count(*[_type == "product" && references(^._id)])
-}`;
-
-const PAGES = groq`*[_type == "page" && defined(slug.current)] {
-  _id, title, "slug": slug.current, _updatedAt, seo,
-  "heroImage": heroImage.asset->url,
-  body[] {
-    ...,
-    _type == "image" => { ..., "src": asset->url, "dimensions": asset->metadata.dimensions },
-    _type == "imageGrid" => { ..., images[] { ..., "src": asset->url, "dimensions": asset->metadata.dimensions } }
-  }
-}`;
-
-const HOME = groq`*[_id == "homePage"][0] {
-  seo,
-  productLines[] { title, subtitle, "image": image ${IMAGE}, "slug": category->slug.current }
-}`;
-
-type RawImage = { src?: string; alt?: string } | null;
 type RawProduct = {
-  _id: string;
-  name: string;
+  id: string;
   slug: string;
-  sku?: string;
-  price: number;
-  compareAtPrice?: number;
-  priceLabel?: string;
-  inStock?: boolean;
-  summary?: string;
-  description?: PortableTextBlock[];
-  taxCode?: string;
-  seo?: Seo;
-  images?: RawImage[];
-  categories?: { name: string; slug: string; isSeries: boolean }[] | null;
-  colors?:
-    | {
-        _key: string;
-        name: string;
-        sku?: string;
-        swatch?: string;
-        price?: number;
-        image?: RawImage;
-      }[]
-    | null;
+  name: string;
+  sku: string;
+  summary: string;
+  descriptionHtml: string;
+  /** Cents. */
+  listPrice: number | null;
+  contractorPrice: number | null;
+  price: number | null;
+  priceLabel: string | null;
+  inStock: boolean;
+  images: RawImage[];
+  categories: { slug: string; name: string; isSeries: boolean }[];
+  attributes: { slug: string; values: { name: string; swatch: string | null }[] }[];
+  options: {
+    id: string;
+    sku: string;
+    color: string | null;
+    price: number | null;
+    listPrice: number | null;
+    inStock: boolean;
+    image: RawImage;
+  }[];
+  taxCode: string;
+  order: number;
+  seo: Seo;
 };
 
-const cents = (dollars: number | undefined) => Math.round((dollars ?? 0) * 100);
+type RawCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  isSeries: boolean;
+  order: number;
+  count: number;
+  image: RawImage;
+  home: { order: number; title: string; subtitle: string; image: RawImage } | null;
+  seo: Seo;
+};
+
+type RawPage = {
+  id: string;
+  slug: string;
+  title: string;
+  html: string;
+  heroImage: RawImage;
+  modified: string;
+  seo: Seo;
+};
+
 const image = (img: RawImage | undefined, fallbackAlt: string): ProductImage | undefined =>
   img?.src ? { src: img.src, alt: img.alt || fallbackAlt } : undefined;
 
 function mapProduct(p: RawProduct): Product {
-  const price = cents(p.price);
-  const regularPrice = p.compareAtPrice ? cents(p.compareAtPrice) : price;
+  const price = p.price ?? 0;
+  const regularPrice = Math.max(p.listPrice ?? price, price);
+  const swatches = new Map(
+    (p.attributes.find((a) => a.slug === "color")?.values ?? []).map((v) => [v.name, v.swatch]),
+  );
+  const options = p.options
+    .filter((o) => o.color)
+    .map((o) => {
+      const optionPrice = o.price ?? price;
+      return {
+        id: o.id,
+        color: o.color!,
+        sku: o.sku || p.sku,
+        swatch: swatches.get(o.color!) ?? undefined,
+        price: optionPrice,
+        regularPrice: Math.max(o.listPrice ?? optionPrice, optionPrice),
+        inStock: o.inStock,
+        image: image(o.image, `${p.name} – ${o.color}`),
+      };
+    });
   return {
-    id: p._id,
+    id: p.id,
     slug: p.slug,
     name: p.name,
-    sku: p.sku ?? "",
-    summary: p.summary ?? "",
-    description: p.description ?? [],
+    sku: p.sku,
+    summary: p.summary,
+    descriptionHtml: p.descriptionHtml,
     price,
     regularPrice,
     onSale: regularPrice > price,
-    priceLabel: p.priceLabel,
-    inStock: p.inStock ?? true,
-    images: (p.images ?? []).flatMap((img) => image(img, p.name) ?? []),
-    categories: p.categories ?? [],
-    colors: (p.colors ?? []).map((c) => c.name),
-    options: (p.colors ?? []).map((c) => {
-      const optionPrice = c.price != null ? cents(c.price) : price;
-      return {
-        id: c._key,
-        color: c.name,
-        sku: c.sku?.trim() || p.sku || "",
-        swatch: c.swatch,
-        price: optionPrice,
-        regularPrice: c.price != null ? Math.max(optionPrice, regularPrice) : regularPrice,
-        image: image(c.image, `${p.name} – ${c.name}`),
-      };
-    }),
-    taxCode: p.taxCode || "txcd_99999999",
-    seo: p.seo ?? {},
+    priceLabel: p.priceLabel ?? undefined,
+    inStock: p.inStock,
+    images: p.images.flatMap((img) => image(img, p.name) ?? []),
+    categories: p.categories,
+    colors: options.map((o) => o.color),
+    options,
+    taxCode: p.taxCode,
+    seo: p.seo,
   };
 }
 
+const byOrderThenName = (a: { order: number; name: string }, b: { order: number; name: string }) =>
+  a.order - b.order || a.name.localeCompare(b.name);
+
 /* ------------------------------------------------------------------ */
-/* Data access (cached; refreshed when Sanity content is published)    */
+/* Data access (cached; refreshed when the CMS posts to /api/revalidate) */
 /* ------------------------------------------------------------------ */
+
+async function getRawCategories(): Promise<RawCategory[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("cms", "products");
+  return cms<RawCategory[]>("categories");
+}
 
 export async function getProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag("sanity", "products");
-  const raw = await sanityClient.fetch<RawProduct[]>(PRODUCTS);
-  return raw.map(mapProduct);
+  cacheTag("cms", "products");
+  const raw = await cms<RawProduct[]>("products");
+  return raw.sort(byOrderThenName).map(mapProduct);
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {
@@ -201,32 +216,19 @@ export async function getProduct(slug: string): Promise<Product | null> {
 }
 
 export async function getCategories(): Promise<ProductCategory[]> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("sanity", "products");
-  const raw = await sanityClient.fetch<
-    {
-      _id: string;
-      name: string;
-      slug: string;
-      description?: string;
-      isSeries?: boolean;
-      seo?: Seo;
-      image?: RawImage;
-      count: number;
-    }[]
-  >(CATEGORIES);
+  const raw = await getRawCategories();
   return raw
     .filter((c) => c.count > 0)
+    .sort(byOrderThenName)
     .map((c) => ({
-      id: c._id,
+      id: c.id,
       slug: c.slug,
       name: c.name,
-      description: c.description ?? "",
-      isSeries: c.isSeries ?? false,
+      description: c.description,
+      isSeries: c.isSeries,
       count: c.count,
       image: image(c.image, c.name),
-      seo: c.seo ?? {},
+      seo: c.seo,
     }));
 }
 
@@ -236,26 +238,16 @@ export const RESERVED_PAGE_SLUGS = new Set(["contact-us"]);
 export async function getPages(): Promise<Page[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag("sanity", "pages");
-  const raw = await sanityClient.fetch<
-    {
-      _id: string;
-      title: string;
-      slug: string;
-      _updatedAt: string;
-      seo?: Seo;
-      heroImage?: string;
-      body?: PortableTextBlock[];
-    }[]
-  >(PAGES);
+  cacheTag("cms", "pages");
+  const raw = await cms<RawPage[]>("pages");
   return raw.map((p) => ({
-    id: p._id,
+    id: p.id,
     slug: p.slug,
     title: p.title,
-    body: p.body ?? [],
-    heroImage: p.heroImage ?? undefined,
-    modified: p._updatedAt,
-    seo: p.seo ?? {},
+    html: p.html,
+    heroImage: p.heroImage?.src,
+    modified: p.modified,
+    seo: p.seo,
   }));
 }
 
@@ -264,21 +256,18 @@ export async function getPage(slug: string): Promise<Page | null> {
   return pages.find((p) => p.slug === slug) ?? null;
 }
 
+/** The home page grid: categories marked "Home page grid position" in the CMS. */
 export async function getHomePage(): Promise<HomePage> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("sanity", "pages");
-  const raw = await sanityClient.fetch<{
-    seo?: Seo;
-    productLines?: { title: string; subtitle?: string; image?: RawImage; slug?: string }[];
-  } | null>(HOME);
+  const raw = await getRawCategories();
   return {
-    seo: raw?.seo ?? {},
-    productLines: (raw?.productLines ?? []).map((l) => ({
-      title: l.title,
-      subtitle: l.subtitle ?? "",
-      image: image(l.image, l.title),
-      href: l.slug ? `/prod-category/${l.slug}/` : "/shop/",
-    })),
+    productLines: raw
+      .filter((c) => c.home)
+      .sort((a, b) => a.home!.order - b.home!.order)
+      .map((c) => ({
+        title: c.home!.title || c.name,
+        subtitle: c.home!.subtitle,
+        image: image(c.home!.image ?? c.image, c.home!.title || c.name),
+        href: `/prod-category/${c.slug}/`,
+      })),
   };
 }

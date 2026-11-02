@@ -2,11 +2,14 @@ import { timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 
 /**
- * Called by a Sanity webhook whenever content is published, so the site
- * refreshes right away instead of waiting for the hourly cache to expire.
+ * Called by the CMS whenever catalog content changes (products, stock,
+ * categories, colors or pages), so the site refreshes right away instead of
+ * waiting for the hourly cache to expire.
  *
  *   POST /api/revalidate/
  *   Header: x-revalidate-secret: <REVALIDATE_SECRET>
+ *
+ * Set the same secret on the Cool Dog storefront in the CMS (Products → Storefronts).
  */
 export async function POST(request: Request) {
   const secret = process.env.REVALIDATE_SECRET;
@@ -16,7 +19,7 @@ export async function POST(request: Request) {
     return Response.json({ revalidated: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  revalidateTag("sanity", "max");
+  revalidateTag("cms", "max");
   return Response.json({ revalidated: true });
 }
 

@@ -23,12 +23,10 @@ import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getHomePage();
   return buildMetadata({
-    title: seo.title || "Dog Water Fountains for Dog Parks & Apartments | Cool Dog",
+    title: "Dog Water Fountains for Dog Parks & Apartments | Cool Dog",
     description:
-      seo.description ||
-      "Commercial dog water fountains, bottle fillers and rinse stations for dog parks, apartments, HOAs and vet clinics. Made in the USA.",
+      "Commercial dog water fountains, bottle fillers and rinse stations for dog parks, apartments, HOAs and vet clinics. Made in the USA with contractor pricing.",
     path: "/",
     image: media("cool-dog-water-fountains-header.jpg"),
   });
@@ -77,7 +75,7 @@ export default async function HomePage() {
     getCategories(),
     getHomePage(),
   ]);
-  // Product lines are edited in Sanity (Home page); categories are the fallback.
+  // Product lines are categories given a home page grid position in the CMS; all categories are the fallback.
   const lines: ProductLine[] = home.productLines.length
     ? home.productLines
     : categories
@@ -91,7 +89,7 @@ export default async function HomePage() {
 
   const inCategory = (slug: string) =>
     products.filter((p) => p.categories.some((c) => c.slug === slug));
-  // Friendlier tab names for the series; other series use their Sanity name.
+  // Friendlier tab names for the series; other series use their CMS name.
   const SERIES_LABELS: Record<string, string> = {
     "dog-water-fountain-sst": "Cool Dog Series (SST)",
     "dog-water-fountain-slv": "Fresh Flow Series (SLV)",

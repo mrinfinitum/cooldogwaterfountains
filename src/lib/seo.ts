@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { toPlainText, type PortableTextBlock } from "next-sanity";
 import { formatPrice } from "./format";
 import { SITE_NAME, SITE_URL } from "./site";
 import type { Page, Product, ProductCategory } from "./content";
@@ -77,11 +76,25 @@ const shortName = (name: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+
+/** HTML to plain text (tags dropped, common entities decoded). */
+function plainText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (m, e: string) =>
+      e[0] === "#"
+        ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : +e.slice(1))
+        : (ENTITIES[e.toLowerCase()] ?? m),
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** First paragraph of rich text with real sentence content. */
-function firstParagraph(blocks: PortableTextBlock[]): string | undefined {
-  for (const block of blocks) {
-    if (block._type !== "block" || (block.style && block.style !== "normal")) continue;
-    const text = toPlainText([block]).trim();
+function firstParagraph(html: string): string | undefined {
+  for (const [, inner] of html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
+    const text = plainText(inner);
     if (text.length >= 60 && /[a-z]{3}/.test(text)) return text;
   }
   return undefined;
@@ -118,9 +131,9 @@ export function categoryMetadata(category: ProductCategory, productCount: number
   });
 }
 
-/** A content page: its SEO fields from Sanity, or ones built from its content. */
+/** A content page: its SEO fields from the CMS, or ones built from its content. */
 export function pageMetadata(
-  page: Pick<Page, "title" | "slug" | "body" | "heroImage" | "seo">,
+  page: Pick<Page, "title" | "slug" | "html" | "heroImage" | "seo">,
   options: { path?: string; description?: string } = {},
 ): Metadata {
   return buildMetadata({
@@ -128,7 +141,7 @@ export function pageMetadata(
     description:
       page.seo.description ||
       options.description ||
-      firstParagraph(page.body) ||
+      firstParagraph(page.html) ||
       `${page.title} – ${TAGLINE}`,
     path: options.path ?? `/${page.slug}/`,
     image: page.heroImage,

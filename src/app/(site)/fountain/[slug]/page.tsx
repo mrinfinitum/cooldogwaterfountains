@@ -120,7 +120,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
       >
         <div className="border-t border-line">
           <Accordion title="Details & Features" open>
-            <RichText value={product.description} className="text-[15px]" />
+            <RichText html={product.descriptionHtml} className="text-[15px]" />
           </Accordion>
           <Accordion title="Colors">
             <p className="text-[15px] text-ink/80">
