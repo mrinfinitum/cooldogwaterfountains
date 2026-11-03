@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
+import { fromCms } from "@/lib/cms-secret";
 
 /**
  * Called by the CMS whenever catalog content changes (products, stock,
@@ -12,19 +12,9 @@ import { revalidateTag } from "next/cache";
  * Set the same secret on the Cool Dog storefront in the CMS (Products → Storefronts).
  */
 export async function POST(request: Request) {
-  const secret = process.env.REVALIDATE_SECRET;
-  const provided = request.headers.get("x-revalidate-secret") ?? "";
-
-  if (!secret || !safeEqual(provided, secret)) {
+  if (!fromCms(request)) {
     return Response.json({ revalidated: false, error: "Unauthorized" }, { status: 401 });
   }
-
   revalidateTag("cms", "max");
   return Response.json({ revalidated: true });
-}
-
-function safeEqual(a: string, b: string) {
-  const left = Buffer.from(a);
-  const right = Buffer.from(b);
-  return left.length === right.length && timingSafeEqual(left, right);
 }

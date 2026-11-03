@@ -13,12 +13,18 @@ export async function sendEmail(message: {
   subject: string;
   text: string;
   replyTo?: string;
+  /** Resend sends at most one email per key (within 24 hours), so retries don't duplicate it. */
+  idempotencyKey?: string;
 }) {
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error("RESEND_API_KEY is not set.");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+    headers: {
+      authorization: `Bearer ${key}`,
+      "content-type": "application/json",
+      ...(message.idempotencyKey ? { "idempotency-key": message.idempotencyKey } : {}),
+    },
     body: JSON.stringify({
       from: process.env.QUOTE_FROM_EMAIL || "Cool Dog Water Fountains <quotes@send.thedogparkcompany.com>",
       to: message.to,
