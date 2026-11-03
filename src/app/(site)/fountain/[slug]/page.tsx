@@ -4,13 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
+import { seriesOf } from "@/lib/format";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
 import { ChevronIcon } from "@/components/icons";
 import { RESOURCE_LINKS, SITE_NAME } from "@/lib/site";
 import { productMetadata } from "@/lib/seo";
-import { getProduct, getProducts, type Product } from "@/lib/content";
+import { getProduct, getProducts } from "@/lib/content";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -25,7 +26,6 @@ export async function generateMetadata({
   return product ? productMetadata(product) : {};
 }
 
-const seriesOf = (p: Product) => p.name.match(/\((SST|SLV|STE)\)/)?.[1];
 
 function Accordion({
   title,
@@ -97,7 +97,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
         name={product.name}
         slug={product.slug}
         sku={product.sku}
-        series={seriesOf(product)}
+        series={seriesOf(product.sku)}
         summary={product.summary}
         price={product.price}
         regularPrice={product.regularPrice}

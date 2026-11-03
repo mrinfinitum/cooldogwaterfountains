@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useState, type MouseEvent } from "react";
 import { swatchColor } from "@/lib/colors";
 import type { ColorOption, Product } from "@/lib/content";
+import { seriesOf } from "@/lib/format";
 
 /** The product fields a card needs (kept small: it is sent to the browser). */
 export type CardProduct = Pick<
   Product,
-  "slug" | "name" | "price" | "regularPrice" | "onSale" | "images" | "options"
+  "slug" | "sku" | "name" | "price" | "regularPrice" | "onSale" | "images" | "options"
 >;
 import Price from "./Price";
 import SaveButton from "./account/SaveButton";
@@ -25,7 +26,7 @@ export default function ProductCardView({
   priority?: boolean;
 }) {
   const [first, second] = product.images;
-  const series = product.name.match(/\((SST|SLV|STE)\)/)?.[1];
+  const series = seriesOf(product.sku);
   // Color dot being hovered: the card shows the fountain in that color.
   const [preview, setPreview] = useState<ColorOption | null>(null);
 

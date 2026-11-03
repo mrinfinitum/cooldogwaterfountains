@@ -8,12 +8,15 @@ export function formatPrice(cents: number): string {
   }).format(value);
 }
 
-/** Product name without the "COOL DOG" brand prefix, for menus and links. */
+/** Product name without an all-caps "COOL DOG" brand prefix, for menus and links. */
 export const shortName = (name: string) =>
   name
-    .replace(/^COOL DOG\s+/i, "")
+    .replace(/^COOL DOG\s+/, "")
     .replace(/\s+/g, " ")
     .trim();
+
+/** Product series from the SKU's last segment (e.g. DL-RNSE2-SST → SST). */
+export const seriesOf = (sku: string) => sku.match(/-(SST|SLV|STE)$/i)?.[1].toUpperCase();
 
 /** Shipping is charged as a share of the product subtotal. */
 export const SHIPPING_RATE = 0.12;

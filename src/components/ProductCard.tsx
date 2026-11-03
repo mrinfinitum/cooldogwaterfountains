@@ -9,10 +9,10 @@ export default function ProductCard({
   product: Product;
   priority?: boolean;
 }) {
-  const { slug, name, price, regularPrice, onSale, images, options } = product;
+  const { slug, sku, name, price, regularPrice, onSale, images, options } = product;
   return (
     <ProductCardView
-      product={{ slug, name, price, regularPrice, onSale, images: images.slice(0, 2), options }}
+      product={{ slug, sku, name, price, regularPrice, onSale, images: images.slice(0, 2), options }}
       priority={priority}
     />
   );
