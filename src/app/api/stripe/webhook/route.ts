@@ -1,10 +1,14 @@
 import type Stripe from "stripe";
 import { cms } from "@/lib/cms";
+import { sendEmail } from "@/lib/email";
+import { formatPrice } from "@/lib/format";
+import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
 
 /**
  * Stripe webhook: records each paid Checkout session as an order in the CMS
- * (WooCommerce), which reduces stock and notifies the store.
+ * (WooCommerce), which reduces stock and notifies the store, then emails the
+ * customer an order confirmation.
  *
  *   POST /api/stripe/webhook/
  *   Events: checkout.session.completed, checkout.session.async_payment_succeeded
@@ -45,11 +49,16 @@ export async function POST(request: Request) {
   if (session.payment_status !== "paid") return Response.json({ received: true });
 
   try {
-    const order = await cms<{ id: number; existing?: boolean }>("orders", {
+    const details = orderFor(session);
+    const order = await cms<{ id: number; number: string; existing?: boolean }>("orders", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(orderFor(session)),
+      body: JSON.stringify(details),
     });
+    // The order is recorded, so a failed email is only logged (Stripe's receipt still goes out).
+    await sendConfirmation(order.number, details).catch((error) =>
+      console.error("Order confirmation not sent", order.number, error),
+    );
     return Response.json({ received: true, order: order.id });
   } catch (error) {
     console.error("Recording order in the CMS failed", session.id, error);
@@ -98,4 +107,41 @@ function orderFor(session: Stripe.Checkout.Session) {
     discountTotal: session.total_details?.amount_discount ?? 0,
     total: session.amount_total ?? 0,
   };
+}
+
+/** "Thanks for your order" email in this store's name; sent once per session, however often Stripe retries. */
+async function sendConfirmation(number: string, order: ReturnType<typeof orderFor>) {
+  if (!order.email) return;
+  const ship = order.shipping;
+  const firstName = order.billing.name.split(/\s+/)[0] ?? "";
+  const text = [
+    `Hi${firstName ? ` ${firstName}` : ""},`,
+    "",
+    `Thank you for your order. We've received your payment and will email you tracking as soon as order #${number} ships.`,
+    "",
+    `Order #${number}`,
+    ...order.lines.map((l) => `${l.quantity} × ${l.name}${l.sku ? ` (SKU ${l.sku})` : ""} — ${formatPrice(l.total)}`),
+    "",
+    `Shipping: ${formatPrice(order.shippingTotal)}`,
+    `Sales tax: ${formatPrice(order.taxTotal)}`,
+    ...(order.discountTotal ? [`Discount: −${formatPrice(order.discountTotal)}`] : []),
+    `Total paid: ${formatPrice(order.total)}`,
+    "",
+    ...(ship.line1
+      ? ["Shipping to:", ship.name, ship.line1, ...(ship.line2 ? [ship.line2] : []), `${ship.city}, ${ship.state} ${ship.postalCode}`, ""]
+      : []),
+    `See your order any time in My Account: ${SITE_URL}/account/orders/${number}/`,
+    `(No account yet? Create one with ${order.email} and your orders will be there.)`,
+    "",
+    `Questions? Reply to this email or call ${CONTACT.phone} (${CONTACT.hours}, ${CONTACT.days}).`,
+    "",
+    SITE_NAME,
+  ].join("\n");
+  await sendEmail({
+    to: [order.email],
+    replyTo: CONTACT.email,
+    subject: `Your ${SITE_NAME} order #${number}`,
+    text,
+    idempotencyKey: `order-confirmation-${order.stripeSessionId}`,
+  });
 }
