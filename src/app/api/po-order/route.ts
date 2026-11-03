@@ -1,5 +1,5 @@
 import { cms } from "@/lib/cms";
-import { SALES_RECIPIENTS, isEmail, mailbox, sendEmail } from "@/lib/email";
+import { ORDER_RECIPIENTS, isEmail, mailbox, sendEmail } from "@/lib/email";
 import { SHIPPING_RATE, formatPrice } from "@/lib/format";
 import { CartError, priceCart, type RequestedItem } from "@/lib/pricing";
 import { CONTACT, SITE_NAME } from "@/lib/site";
@@ -8,8 +8,8 @@ type Address = { line1: string; line2: string; city: string; state: string; post
 
 /**
  * "Pay by invoice / PO": records the cart as an On hold order in the CMS
- * (stock is reduced and WooCommerce notifies the store), emails it to the
- * sales team, and sends the buyer a confirmation. Sales invoices the buyer and
+ * (stock is reduced and WooCommerce notifies the store), emails it to
+ * ORDER_RECIPIENTS, and sends the buyer a confirmation. Sales invoices the buyer and
  * marks the order paid in WooCommerce. Sales tax is not charged here; sales
  * adds it to the invoice if it applies.
  *
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
   // The order is already recorded (and WooCommerce has emailed the store), so a failed email is only logged.
   const sent = await Promise.allSettled([
     sendEmail({
-      to: SALES_RECIPIENTS,
+      to: ORDER_RECIPIENTS,
       replyTo: mailbox(name, email),
       subject: `Invoice / PO order #${order.number} – ${company}${poNumber ? ` (PO ${poNumber})` : ""}`,
       text: [

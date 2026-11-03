@@ -1,8 +1,11 @@
 import "server-only";
 import { CONTACT } from "./site";
 
-/** Who receives quote requests and invoice / PO orders. */
+/** Who receives quote requests. */
 export const SALES_RECIPIENTS = [CONTACT.email, "art@gymsfordogs.com"];
+
+/** Who is notified of new orders (WooCommerce's "New order" email goes to the same addresses). */
+export const ORDER_RECIPIENTS = [...SALES_RECIPIENTS, "orders@thedogparkcompany.com"];
 
 /**
  * Sends a plain-text email through Resend. Needs RESEND_API_KEY; sends from
