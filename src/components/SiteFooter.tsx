@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cacheLife } from "next/cache";
-import { getCategories } from "@/lib/content";
+import { getProducts } from "@/lib/content";
+import { shortName } from "@/lib/format";
 import { CONTACT, COMPANY_LINKS, LEGAL_LINKS, LOGO_LIGHT, RESOURCE_LINKS, media } from "@/lib/site";
 import { Wave } from "./icons";
 
@@ -41,8 +42,7 @@ async function CopyrightYear() {
 }
 
 export default async function SiteFooter() {
-  const categories = await getCategories();
-  const types = categories.filter((c) => !c.isSeries);
+  const products = await getProducts();
 
   return (
     <footer className="relative bg-ink text-white">
@@ -88,6 +88,7 @@ export default async function SiteFooter() {
               alt="Cool Dog Water Fountains"
               width={LOGO_LIGHT.width}
               height={LOGO_LIGHT.height}
+              sizes="180px"
               className="h-16 w-auto"
             />
           </Link>
@@ -95,9 +96,9 @@ export default async function SiteFooter() {
         </div>
 
         <FooterColumn title="Fountains" className="lg:col-span-3">
-          {types.map((c) => (
-            <FooterLink key={c.slug} href={`/prod-category/${c.slug}/`}>
-              {c.name.replace(/^COOL DOG\s+/i, "")}
+          {products.map((p) => (
+            <FooterLink key={p.slug} href={`/fountain/${p.slug}/`}>
+              {shortName(p.name)}
             </FooterLink>
           ))}
           <FooterLink href="/shop/">Shop All</FooterLink>

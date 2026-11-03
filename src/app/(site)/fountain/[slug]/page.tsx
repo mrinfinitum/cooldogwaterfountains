@@ -53,11 +53,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   if (!product) notFound();
 
   const all = await getProducts();
-  const typeCategory = product.categories.find((c) => !c.isSeries);
-  const related = all
-    .filter((p) => p.id !== product.id)
-    .filter((p) => p.categories.some((c) => product.categories.some((pc) => pc.slug === c.slug)))
-    .slice(0, 4);
+  const related = all.filter((p) => p.id !== product.id).slice(0, 4);
 
   // Structured data for search engines.
   const jsonLd = {
@@ -95,14 +91,6 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
         <Link href="/shop/" className="hover:text-teal">
           Fountains
         </Link>
-        {typeCategory && (
-          <>
-            <span>/</span>
-            <Link href={`/prod-category/${typeCategory.slug}/`} className="hover:text-teal">
-              {typeCategory.name.replace(/^COOL DOG\s+/i, "")}
-            </Link>
-          </>
-        )}
       </nav>
 
       <ProductView

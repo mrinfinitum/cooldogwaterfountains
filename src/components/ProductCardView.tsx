@@ -13,7 +13,7 @@ export type CardProduct = Pick<
 >;
 import Price from "./Price";
 
-const SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw";
+const SIZES = "(min-width: 1600px) 520px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
 
 export default function ProductCardView({
   product,

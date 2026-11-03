@@ -8,11 +8,11 @@ import { CloseIcon, MenuIcon, PhoneIcon } from "./icons";
 type NavLink = { href: string; label: string };
 
 export default function MobileMenu({
-  categories,
+  products,
   resources,
   company,
 }: {
-  categories: { slug: string; name: string }[];
+  products: NavLink[];
   resources: NavLink[];
   company: NavLink[];
 }) {
@@ -65,10 +65,10 @@ export default function MobileMenu({
               <details open className="border-b border-line pb-4">
                 <summary className="headline cursor-pointer list-none text-3xl">Shop</summary>
                 <ul className="mt-3 space-y-2.5">
-                  {categories.map((c) => (
-                    <li key={c.slug}>
-                      <Link href={`/prod-category/${c.slug}/`} className="text-[15px]">
-                        {c.name.replace(/^COOL DOG\s+/i, "")}
+                  {products.map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className="text-[15px]">
+                        {l.label}
                       </Link>
                     </li>
                   ))}

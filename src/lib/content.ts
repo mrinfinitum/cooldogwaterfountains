@@ -52,17 +52,6 @@ export type Product = {
   seo: Seo;
 };
 
-export type ProductCategory = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  isSeries: boolean;
-  count: number;
-  image?: ProductImage;
-  seo: Seo;
-};
-
 export type Page = {
   id: string;
   slug: string;
@@ -73,16 +62,6 @@ export type Page = {
   modified: string;
   seo: Seo;
 };
-
-/** A card in the home page "Shop by fountain" grid. */
-export type ProductLine = {
-  title: string;
-  subtitle: string;
-  image?: ProductImage;
-  href: string;
-};
-
-export type HomePage = { productLines: ProductLine[] };
 
 /* ------------------------------------------------------------------ */
 /* Headless Commerce CMS API (WordPress + WooCommerce)                 */
@@ -117,19 +96,6 @@ type RawProduct = {
   }[];
   taxCode: string;
   order: number;
-  seo: Seo;
-};
-
-type RawCategory = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  isSeries: boolean;
-  order: number;
-  count: number;
-  image: RawImage;
-  home: { order: number; title: string; subtitle: string; image: RawImage } | null;
   seo: Seo;
 };
 
@@ -195,13 +161,6 @@ const byOrderThenName = (a: { order: number; name: string }, b: { order: number;
 /* Data access (cached; refreshed when the CMS posts to /api/revalidate) */
 /* ------------------------------------------------------------------ */
 
-async function getRawCategories(): Promise<RawCategory[]> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("cms", "products");
-  return cms<RawCategory[]>("categories");
-}
-
 export async function getProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
@@ -213,23 +172,6 @@ export async function getProducts(): Promise<Product[]> {
 export async function getProduct(slug: string): Promise<Product | null> {
   const products = await getProducts();
   return products.find((p) => p.slug === slug) ?? null;
-}
-
-export async function getCategories(): Promise<ProductCategory[]> {
-  const raw = await getRawCategories();
-  return raw
-    .filter((c) => c.count > 0)
-    .sort(byOrderThenName)
-    .map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description,
-      isSeries: c.isSeries,
-      count: c.count,
-      image: image(c.image, c.name),
-      seo: c.seo,
-    }));
 }
 
 /** Pages with their own routes rather than the generic page template. */
@@ -254,20 +196,4 @@ export async function getPages(): Promise<Page[]> {
 export async function getPage(slug: string): Promise<Page | null> {
   const pages = await getPages();
   return pages.find((p) => p.slug === slug) ?? null;
-}
-
-/** The home page grid: categories marked "Home page grid position" in the CMS. */
-export async function getHomePage(): Promise<HomePage> {
-  const raw = await getRawCategories();
-  return {
-    productLines: raw
-      .filter((c) => c.home)
-      .sort((a, b) => a.home!.order - b.home!.order)
-      .map((c) => ({
-        title: c.home!.title || c.name,
-        subtitle: c.home!.subtitle,
-        image: image(c.home!.image ?? c.image, c.home!.title || c.name),
-        href: `/prod-category/${c.slug}/`,
-      })),
-  };
 }

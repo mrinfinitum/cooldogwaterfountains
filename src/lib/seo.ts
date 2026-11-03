@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { formatPrice } from "./format";
 import { SITE_NAME, SITE_URL } from "./site";
-import type { Page, Product, ProductCategory } from "./content";
+import type { Page, Product } from "./content";
+import { shortName } from "./format";
 
 const TITLE_MAX = 60;
 const DESC_MIN = 70;
@@ -70,12 +71,6 @@ export function buildMetadata({
   };
 }
 
-const shortName = (name: string) =>
-  name
-    .replace(/^COOL DOG\s+/i, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
 /** HTML to plain text (tags dropped, common entities decoded). */
@@ -112,22 +107,6 @@ export function productMetadata(product: Product): Metadata {
     path: `/fountain/${product.slug}/`,
     image: product.images[0]?.src,
     noindex: product.seo.noindex,
-  });
-}
-
-export function categoryMetadata(category: ProductCategory, productCount: number): Metadata {
-  const name = shortName(category.name);
-  const generated = `Shop ${name} dog water fountains: ${productCount} ${
-    productCount === 1 ? "model" : "models"
-  } with contractor pricing for dog parks, apartments, HOAs and vet clinics.`;
-  return buildMetadata({
-    title: category.seo.title || `${name} | ${SITE_NAME}`,
-    description:
-      category.seo.description ||
-      (category.description.length >= DESC_MIN ? category.description : generated),
-    path: `/prod-category/${category.slug}/`,
-    image: category.image?.src,
-    noindex: category.seo.noindex,
   });
 }
 

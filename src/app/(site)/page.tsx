@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
-import ProductTabs from "@/components/ProductTabs";
 import {
-  ArrowIcon,
   DropIcon,
   FlagIcon,
   PaletteIcon,
@@ -12,13 +11,7 @@ import {
   Wave,
 } from "@/components/icons";
 import { CONTACT, HERO_POSTER, HERO_VIDEO, LOGO, SITE_NAME, SITE_URL, media } from "@/lib/site";
-import {
-  getCategories,
-  getHomePage,
-  getProducts,
-  type Product,
-  type ProductLine,
-} from "@/lib/content";
+import { getProducts } from "@/lib/content";
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 
@@ -26,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Dog Water Fountains for Dog Parks & Apartments | Cool Dog",
     description:
-      "Commercial dog water fountains, bottle fillers and rinse stations for dog parks, apartments, HOAs and vet clinics. Made in the USA with contractor pricing.",
+      "Commercial dog water fountains and dog rinse stations for dog parks, apartments, HOAs and vet clinics. Push-button and portable models, made in the USA.",
     path: "/",
     image: media("cool-dog-water-fountains-header.jpg"),
   });
@@ -41,7 +34,7 @@ const FEATURES = [
   {
     icon: ShieldIcon,
     title: "Built to Last",
-    text: "Marine-grade 316 stainless steel and the highest quality outdoor coatings.",
+    text: "Heavy-duty stainless steel and the highest quality outdoor powder coatings.",
   },
   {
     icon: DropIcon,
@@ -70,40 +63,7 @@ const COLOR_CHIPS = [
 ];
 
 export default async function HomePage() {
-  const [products, categories, home] = await Promise.all([
-    getProducts(),
-    getCategories(),
-    getHomePage(),
-  ]);
-  // Product lines are categories given a home page grid position in the CMS; all categories are the fallback.
-  const lines: ProductLine[] = home.productLines.length
-    ? home.productLines
-    : categories
-        .filter((c) => !c.isSeries && c.image)
-        .map((c) => ({
-          title: c.name.replace(/^COOL DOG\s+/i, ""),
-          subtitle: "",
-          image: c.image,
-          href: `/prod-category/${c.slug}/`,
-        }));
-
-  const inCategory = (slug: string) =>
-    products.filter((p) => p.categories.some((c) => c.slug === slug));
-  // Friendlier tab names for the series; other series use their CMS name.
-  const SERIES_LABELS: Record<string, string> = {
-    "dog-water-fountain-sst": "Cool Dog Series (SST)",
-    "dog-water-fountain-slv": "Fresh Flow Series (SLV)",
-  };
-  const tabs = [
-    { id: "all", label: "All Fountains", items: products },
-    ...categories
-      .filter((c) => c.isSeries)
-      .map((c) => ({
-        id: c.slug,
-        label: SERIES_LABELS[c.slug] ?? c.name,
-        items: inCategory(c.slug),
-      })),
-  ].filter((t) => t.items.length > 0);
+  const products = await getProducts();
 
   // Structured data for search engines.
   const jsonLd = [
@@ -128,33 +88,29 @@ export default async function HomePage() {
       />
       {/* ---------------- Hero ---------------- */}
       <section className="relative isolate flex min-h-[min(78svh,820px)] items-end overflow-hidden bg-deep text-white lg:min-h-[min(86svh,960px)]">
+        {/* The video's first frame, shown until the video loads (and instead of it with reduced motion). */}
         <Image
-          src={media("cool-dog-water-fountains-header.jpg")}
+          src={HERO_POSTER}
           alt=""
           fill
           priority
           sizes="100vw"
           className="-z-20 object-cover"
         />
-        <video
-          className="absolute inset-0 -z-20 size-full object-cover motion-reduce:hidden"
+        <HeroVideo
           src={HERO_VIDEO}
-          poster={HERO_POSTER}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-hidden
+          className="absolute inset-0 -z-20 size-full object-cover"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-deep/35 to-teal/10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/55 via-ink/15 to-transparent" />
         <div className="mx-auto w-full max-w-[1600px] px-4 pb-16 lg:px-8 lg:pb-24">
-          <p className="eyebrow text-white">Dog Water Fountains · Made in the USA</p>
-          <h1 className="headline mt-5 max-w-5xl text-[19vw] sm:text-[8.5rem] lg:text-[11rem]">
-            Hydration
-            <br />
-            made easy
+          <h1>
+            <span className="eyebrow block text-white">Dog Water Fountains · Made in the USA</span>
+            <span className="headline mt-5 block max-w-5xl text-[19vw] sm:text-[8.5rem] lg:text-[11rem]">
+              Hydration
+              <br />
+              made easy
+            </span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-white/85">
             Top-quality dog water fountains and dog drinking fountains for parks, apartments, HOAs
@@ -175,37 +131,18 @@ export default async function HomePage() {
         <Wave className="absolute -bottom-px left-0 h-6 w-full text-white" />
       </section>
 
-      {/* ---------------- Shop by fountain ---------------- */}
-      <section className="mx-auto max-w-[1600px] px-4 py-20 lg:px-8 lg:py-28">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="eyebrow text-teal">The ultimate pet water fountain options</p>
-            <h2 className="headline mt-3 text-6xl lg:text-8xl">Shop by fountain</h2>
-          </div>
-          <Link href="/shop/" className="eyebrow link-underline">
-            Shop all fountains
-          </Link>
+      {/* ---------------- The fountains ---------------- */}
+      <section
+        id="products"
+        className="mx-auto max-w-[1600px] scroll-mt-28 px-4 py-20 lg:px-8 lg:py-28"
+      >
+        <div className="mb-10">
+          <p className="eyebrow text-teal">Contractor pricing on every model</p>
+          <h2 className="headline mt-3 text-6xl lg:text-8xl">The fountains</h2>
         </div>
-        <div className="grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-          {lines.map((line) => (
-            <Link key={line.href + line.subtitle} href={line.href} className="group flex flex-col">
-              <div className="relative aspect-square overflow-hidden bg-mist">
-                {line.image && (
-                  <Image
-                    src={line.image.src}
-                    alt={line.image.alt}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-contain transition duration-700 group-hover:scale-[1.03]"
-                  />
-                )}
-              </div>
-              {line.subtitle && <p className="eyebrow mt-5 text-teal">{line.subtitle}</p>}
-              <h3 className="headline mt-2 text-3xl group-hover:text-teal">{line.title}</h3>
-              <span className="eyebrow mt-auto inline-flex items-center gap-2 pt-4">
-                Shop <ArrowIcon width={14} height={14} />
-              </span>
-            </Link>
+        <div className="grid grid-cols-1 gap-x-4 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
           ))}
           <Link
             href="/contact-us/"
@@ -254,24 +191,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* ---------------- Product grid ---------------- */}
-      <section
-        id="products"
-        className="mx-auto max-w-[1600px] scroll-mt-28 px-4 py-20 lg:px-8 lg:py-28"
-      >
-        <div className="mb-10">
-          <p className="eyebrow text-teal">Contractor pricing on every model</p>
-          <h2 className="headline mt-3 text-6xl lg:text-8xl">The fountains</h2>
-        </div>
-        <ProductTabs
-          tabs={tabs.map((t) => ({
-            id: t.id,
-            label: `${t.label} (${t.items.length})`,
-            content: <ProductGrid products={t.items} />,
-          }))}
-        />
       </section>
 
       {/* ---------------- Color Play ---------------- */}
@@ -351,16 +270,6 @@ export default async function HomePage() {
         />
       </section>
     </>
-  );
-}
-
-function ProductGrid({ products }: { products: Product[] }) {
-  return (
-    <div className="grid grid-cols-1 gap-x-4 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
-      ))}
-    </div>
   );
 }
 

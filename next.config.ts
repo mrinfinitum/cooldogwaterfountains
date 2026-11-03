@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
       // Old WooCommerce URLs.
       { source: "/product-tag/:tag*", destination: "/shop/", permanent: true },
       { source: "/my-account/:path*", destination: "/", permanent: true },
+      // Category pages: with only a handful of fountains, the shop lists them all.
+      { source: "/prod-category/:path*", destination: "/shop/", permanent: true },
       // Fountains no longer sold on this site.
       ...[
         "cool-dog-drink-cool-bottle-filler-with-pet-hose-single-dog-basin-sst",

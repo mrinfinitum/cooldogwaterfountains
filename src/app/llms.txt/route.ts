@@ -1,6 +1,6 @@
-import { getCategories, getPages, getProducts } from "@/lib/content";
+import { getPages, getProducts } from "@/lib/content";
 import { formatPrice } from "@/lib/format";
-import { categoryMetadata, pageMetadata, productMetadata } from "@/lib/seo";
+import { pageMetadata, productMetadata } from "@/lib/seo";
 import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
@@ -8,11 +8,7 @@ import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
  * (https://llmstxt.org). Built from the same CMS content as the pages.
  */
 export async function GET() {
-  const [products, categories, pages] = await Promise.all([
-    getProducts(),
-    getCategories(),
-    getPages(),
-  ]);
+  const [products, pages] = await Promise.all([getProducts(), getPages()]);
 
   const text = (value: unknown) => String(value ?? "");
   const link = (label: string, path: string, note?: string) =>
@@ -32,14 +28,6 @@ export async function GET() {
     );
   });
 
-  const lineCategories = categories.filter((c) => !c.isSeries);
-  const seriesCategories = categories.filter((c) => c.isSeries);
-  const categoryLine = (c: (typeof categories)[number]) => {
-    const count = products.filter((p) => p.categories.some((pc) => pc.slug === c.slug)).length;
-    const meta = categoryMetadata(c, count);
-    return link(c.name, `/prod-category/${c.slug}/`, text(meta.description));
-  };
-
   const contentPages = pages.filter((p) => p.slug !== "contact-us" && !p.seo.noindex);
   const pageLine = (slug: string) => {
     const page = contentPages.find((p) => p.slug === slug);
@@ -58,11 +46,11 @@ export async function GET() {
   const body = [
     `# ${SITE_NAME}`,
     "",
-    "> Commercial-grade dog water fountains, bottle fillers and dog rinse stations for dog parks, apartments, condos, HOAs, city parks, veterinary clinics and doggie daycares. Designed and manufactured in the USA, sold with contractor pricing. A brand of The Dog Park Company.",
+    "> Commercial-grade dog water fountains and dog rinse stations for dog parks, apartments, condos, HOAs, city parks, veterinary clinics and doggie daycares. Designed and manufactured in the USA, sold with contractor pricing. A brand of The Dog Park Company.",
     "",
     "Key facts:",
     "",
-    "- Two product families: Cool Dog stainless steel fountains (SST, marine-grade 316 stainless) and Fresh Flow fountains (SLV, powder-coated, lever handle or push button, surface-mount or portable on a garden hose).",
+    `- ${products.length} products: Fresh Flow dog water fountains (SLV, powder-coated, no basin so no standing water; push button for surface mount, or lever handle on a rolling base that connects to a garden hose, each with or without a pet hose) and a two-station stainless steel dog rinse station (SST).`,
     "- Color Play® program: standard colors plus custom colors.",
     "- Installation and assembly available across the USA; most maintenance or construction staff can install the fountains.",
     `- Sales and quotes: ${CONTACT.phone} · ${CONTACT.email} · ${CONTACT.hours}, ${CONTACT.days}.`,
@@ -71,14 +59,6 @@ export async function GET() {
     "## Products",
     "",
     ...productLines,
-    "",
-    "## Product lines",
-    "",
-    ...lineCategories.map(categoryLine),
-    "",
-    "## Series",
-    "",
-    ...seriesCategories.map(categoryLine),
     "",
     "## Planning, installation and specifications",
     "",

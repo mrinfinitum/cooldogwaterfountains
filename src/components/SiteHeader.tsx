@@ -1,16 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCategories } from "@/lib/content";
+import { getProducts } from "@/lib/content";
+import { shortName } from "@/lib/format";
 import CartButton from "./cart/CartButton";
 import { CONTACT, COMPANY_LINKS, LOGO, RESOURCE_LINKS, media } from "@/lib/site";
 import { ChevronIcon, PhoneIcon } from "./icons";
 import MobileMenu from "./MobileMenu";
 
 export default async function SiteHeader() {
-  const categories = await getCategories();
-  const types = categories.filter((c) => !c.isSeries);
-  const series = categories.filter((c) => c.isSeries);
-  const featured = types.filter((c) => c.image).slice(0, 2);
+  const products = await getProducts();
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
@@ -27,69 +25,32 @@ export default async function SiteHeader() {
                   Shop <ChevronIcon width={14} height={14} />
                 </Link>
                 <div className="invisible absolute inset-x-0 top-full border-y border-line bg-white opacity-0 shadow-[0_24px_40px_-24px_rgba(7,34,43,0.35)] transition duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-                  <div className="mx-auto grid max-w-[1600px] grid-cols-12 gap-8 px-8 py-10">
-                    <div className="col-span-3">
-                      <p className="eyebrow mb-4 text-muted">Shop by Fountain</p>
-                      <ul className="space-y-2.5">
-                        {types.map((c) => (
-                          <li key={c.slug}>
-                            <Link
-                              href={`/prod-category/${c.slug}/`}
-                              className="text-[15px] hover:text-teal"
-                            >
-                              {c.name.replace(/^COOL DOG\s+/i, "")}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="eyebrow mb-4 text-muted">Series</p>
-                      <ul className="space-y-2.5">
-                        {series.map((c) => (
-                          <li key={c.slug}>
-                            <Link
-                              href={`/prod-category/${c.slug}/`}
-                              className="text-[15px] hover:text-teal"
-                            >
-                              {c.name}
-                            </Link>
-                          </li>
-                        ))}
-                        <li className="pt-3">
-                          <Link href="/shop/" className="link-underline text-[15px] font-semibold">
-                            Shop All Fountains
+                  <div className="mx-auto max-w-[1600px] px-8 py-10">
+                    <ul className="grid grid-cols-5 gap-6">
+                      {products.map((p) => (
+                        <li key={p.slug}>
+                          <Link href={`/fountain/${p.slug}/`} className="group/card block">
+                            <span className="relative block aspect-square overflow-hidden bg-mist">
+                              {p.images[0] && (
+                                <Image
+                                  src={p.images[0].src}
+                                  alt={p.images[0].alt}
+                                  fill
+                                  sizes="260px"
+                                  className="object-contain transition duration-500 group-hover/card:scale-[1.04]"
+                                />
+                              )}
+                            </span>
+                            <span className="mt-3 block text-[15px] leading-snug group-hover/card:text-teal">
+                              {shortName(p.name)}
+                            </span>
                           </Link>
                         </li>
-                      </ul>
-                    </div>
-                    <div className="col-span-7 grid grid-cols-2 gap-6">
-                      {featured.map((c) => (
-                        <Link
-                          key={c.slug}
-                          href={`/prod-category/${c.slug}/`}
-                          className="group/card flex gap-5 bg-mist p-4"
-                        >
-                          <span className="relative block aspect-square w-40 shrink-0 overflow-hidden">
-                            {c.image && (
-                              <Image
-                                src={c.image.src}
-                                alt={c.image.alt}
-                                fill
-                                sizes="160px"
-                                className="object-contain transition duration-500 group-hover/card:scale-[1.04]"
-                              />
-                            )}
-                          </span>
-                          <span className="flex flex-col justify-center">
-                            <span className="headline block text-3xl group-hover/card:text-teal">
-                              {c.name.replace(/^COOL DOG\s+/i, "")}
-                            </span>
-                            <span className="eyebrow mt-3 inline-block text-teal">Shop Now</span>
-                          </span>
-                        </Link>
                       ))}
-                    </div>
+                    </ul>
+                    <Link href="/shop/" className="link-underline mt-8 inline-block text-[15px] font-semibold">
+                      Shop All Fountains
+                    </Link>
                   </div>
                 </div>
               </li>
@@ -167,7 +128,7 @@ export default async function SiteHeader() {
           </nav>
 
           <MobileMenu
-            categories={types.map((c) => ({ slug: c.slug, name: c.name }))}
+            products={products.map((p) => ({ href: `/fountain/${p.slug}/`, label: shortName(p.name) }))}
             resources={RESOURCE_LINKS}
             company={COMPANY_LINKS}
           />
@@ -181,6 +142,7 @@ export default async function SiteHeader() {
             width={LOGO.width}
             height={LOGO.height}
             priority
+            sizes="(min-width: 1024px) 156px, 112px"
             className="h-10 w-auto lg:h-14"
           />
         </Link>

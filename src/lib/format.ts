@@ -8,6 +8,13 @@ export function formatPrice(cents: number): string {
   }).format(value);
 }
 
+/** Product name without the "COOL DOG" brand prefix, for menus and links. */
+export const shortName = (name: string) =>
+  name
+    .replace(/^COOL DOG\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 /** Shipping is charged as a share of the product subtotal. */
 export const SHIPPING_RATE = 0.12;
 export const shippingFor = (subtotalCents: number) => Math.round(subtotalCents * SHIPPING_RATE);
