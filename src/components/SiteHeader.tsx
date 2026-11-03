@@ -4,7 +4,7 @@ import { getProducts } from "@/lib/content";
 import { shortName } from "@/lib/format";
 import CartButton from "./cart/CartButton";
 import { CONTACT, COMPANY_LINKS, LOGO, RESOURCE_LINKS, media } from "@/lib/site";
-import { ChevronIcon, PhoneIcon } from "./icons";
+import { ChevronIcon, PhoneIcon, UserIcon } from "./icons";
 import MobileMenu from "./MobileMenu";
 
 export default async function SiteHeader() {
@@ -157,6 +157,9 @@ export default async function SiteHeader() {
           </a>
           <Link href="/contact-us/" className="btn btn-primary hidden min-h-10 px-5 lg:inline-flex">
             Build a Quote
+          </Link>
+          <Link href="/account/" aria-label="My account" className="hover:text-teal">
+            <UserIcon width={22} height={22} />
           </Link>
           <CartButton />
         </div>

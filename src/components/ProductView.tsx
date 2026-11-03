@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import SaveButton from "./account/SaveButton";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { swatchColor } from "@/lib/colors";
@@ -212,6 +213,9 @@ export default function ProductView(props: Props) {
           <Link href={quoteHref} className="btn btn-outline mt-3 w-full">
             Request a Quote
           </Link>
+          <div className="mt-4 flex justify-center">
+            <SaveButton slug={slug} />
+          </div>
 
           <ul className="mt-8 grid gap-3 border-y border-line py-6 text-sm">
             <li className="flex items-center gap-3">

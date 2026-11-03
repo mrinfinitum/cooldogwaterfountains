@@ -12,8 +12,10 @@ export type CardProduct = Pick<
   "slug" | "name" | "price" | "regularPrice" | "onSale" | "images" | "options"
 >;
 import Price from "./Price";
+import SaveButton from "./account/SaveButton";
 
-const SIZES = "(min-width: 1600px) 520px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
+const SIZES =
+  "(min-width: 1600px) 520px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
 
 export default function ProductCardView({
   product,
@@ -42,77 +44,94 @@ export default function ProductCardView({
   };
 
   return (
-    <Link href={href} className="group block" onMouseLeave={() => setPreview(null)}>
-      <div className="relative aspect-square overflow-hidden bg-mist">
-        {first && (
-          <Image
-            src={first.src}
-            alt={first.alt}
-            fill
-            priority={priority}
-            sizes={SIZES}
-            className={`object-contain transition duration-500 ${
-              preview?.image ? "opacity-0" : second ? "group-hover:opacity-0" : ""
-            }`}
-          />
-        )}
-        {second && !preview?.image && (
-          <Image
-            src={second.src}
-            alt=""
-            fill
-            sizes={SIZES}
-            className="object-contain opacity-0 transition duration-500 group-hover:opacity-100"
-          />
-        )}
-        {preview?.image && (
-          <Image
-            key={preview.image.src}
-            src={preview.image.src}
-            alt={preview.image.alt}
-            fill
-            sizes={SIZES}
-            className="object-contain"
-          />
-        )}
-        <div className="absolute left-3 top-3 flex gap-2">
-          {series && (
-            <span className="eyebrow bg-white px-2 py-1 text-[10px]">{series} Series</span>
+    <div className="relative">
+      <Link
+        href={href}
+        className="group block"
+        onMouseLeave={() => setPreview(null)}
+      >
+        <div className="relative aspect-square overflow-hidden bg-mist">
+          {first && (
+            <Image
+              src={first.src}
+              alt={first.alt}
+              fill
+              priority={priority}
+              sizes={SIZES}
+              className={`object-contain transition duration-500 ${
+                preview?.image
+                  ? "opacity-0"
+                  : second
+                    ? "group-hover:opacity-0"
+                    : ""
+              }`}
+            />
           )}
-          {product.onSale && (
-            <span className="eyebrow bg-teal px-2 py-1 text-[10px] text-white">
-              Contractor Price
-            </span>
+          {second && !preview?.image && (
+            <Image
+              src={second.src}
+              alt=""
+              fill
+              sizes={SIZES}
+              className="object-contain opacity-0 transition duration-500 group-hover:opacity-100"
+            />
+          )}
+          {preview?.image && (
+            <Image
+              key={preview.image.src}
+              src={preview.image.src}
+              alt={preview.image.alt}
+              fill
+              sizes={SIZES}
+              className="object-contain"
+            />
+          )}
+          <div className="absolute left-3 top-3 flex gap-2">
+            {series && (
+              <span className="eyebrow bg-white px-2 py-1 text-[10px]">
+                {series} Series
+              </span>
+            )}
+            {product.onSale && (
+              <span className="eyebrow bg-teal px-2 py-1 text-[10px] text-white">
+                Contractor Price
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          <h3 className="text-[15px] font-medium leading-snug group-hover:text-teal">
+            {product.name}
+          </h3>
+          <Price price={product.price} regularPrice={product.regularPrice} />
+          {product.options.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {product.options.slice(0, 8).map((option) => (
+                <span
+                  key={option.id}
+                  title={option.color}
+                  onMouseEnter={() => setPreview(option)}
+                  onClick={(event) => onDotClick(event, option)}
+                  className={`size-4 rounded-full border border-black/10 outline-offset-2 transition ${
+                    preview?.id === option.id ? "outline-2 outline-teal" : ""
+                  }`}
+                  style={{
+                    background: option.swatch ?? swatchColor(option.color),
+                  }}
+                />
+              ))}
+              <span className="eyebrow ml-1 text-[10px] text-muted">
+                {preview
+                  ? preview.color
+                  : `${product.options.length} ${product.options.length === 1 ? "color" : "colors"}`}
+              </span>
+            </div>
           )}
         </div>
+      </Link>
+      <div className="absolute right-3 top-3">
+        <SaveButton slug={product.slug} compact />
       </div>
-      <div className="mt-4 space-y-2">
-        <h3 className="text-[15px] font-medium leading-snug group-hover:text-teal">
-          {product.name}
-        </h3>
-        <Price price={product.price} regularPrice={product.regularPrice} />
-        {product.options.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {product.options.slice(0, 8).map((option) => (
-              <span
-                key={option.id}
-                title={option.color}
-                onMouseEnter={() => setPreview(option)}
-                onClick={(event) => onDotClick(event, option)}
-                className={`size-4 rounded-full border border-black/10 outline-offset-2 transition ${
-                  preview?.id === option.id ? "outline-2 outline-teal" : ""
-                }`}
-                style={{ background: option.swatch ?? swatchColor(option.color) }}
-              />
-            ))}
-            <span className="eyebrow ml-1 text-[10px] text-muted">
-              {preview
-                ? preview.color
-                : `${product.options.length} ${product.options.length === 1 ? "color" : "colors"}`}
-            </span>
-          </div>
-        )}
-      </div>
-    </Link>
+    </div>
   );
 }

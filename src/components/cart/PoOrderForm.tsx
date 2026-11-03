@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import type { Address } from "@/lib/account";
+import { postAccount, useAccount } from "@/lib/account-client";
 import { clearCart, type CartItem } from "@/lib/cart";
 import { formatPrice, shippingFor } from "@/lib/format";
 import { CONTACT } from "@/lib/site";
@@ -9,26 +12,30 @@ const field =
   "mt-2 w-full border border-line bg-white px-4 py-3 text-[15px] outline-none transition focus:border-teal focus:ring-2 focus:ring-aqua/40";
 const label = "eyebrow text-[11px]";
 
-function AddressFields({ prefix, title }: { prefix: string; title: string }) {
+function AddressFields({ prefix, title, value }: { prefix: string; title: string; value?: Address }) {
   return (
     <fieldset className="grid gap-5 sm:col-span-2 sm:grid-cols-6">
       <legend className="eyebrow mb-1 text-muted sm:col-span-6">{title}</legend>
       <label className={`${label} sm:col-span-6`}>
         Street address *
-        <input name={`${prefix}.line1`} required autoComplete={`${prefix} address-line1`} className={field} />
+        <input name={`${prefix}.line1`}
+          defaultValue={value?.line1} required autoComplete={`${prefix} address-line1`} className={field} />
       </label>
       <label className={`${label} sm:col-span-6`}>
         Suite, unit, building
-        <input name={`${prefix}.line2`} autoComplete={`${prefix} address-line2`} className={field} />
+        <input name={`${prefix}.line2`}
+          defaultValue={value?.line2} autoComplete={`${prefix} address-line2`} className={field} />
       </label>
       <label className={`${label} sm:col-span-3`}>
         City *
-        <input name={`${prefix}.city`} required autoComplete={`${prefix} address-level2`} className={field} />
+        <input name={`${prefix}.city`}
+          defaultValue={value?.city} required autoComplete={`${prefix} address-level2`} className={field} />
       </label>
       <label className={`${label} sm:col-span-1`}>
         State *
         <input
           name={`${prefix}.state`}
+          defaultValue={value?.state}
           required
           maxLength={2}
           pattern="[A-Za-z]{2}"
@@ -41,6 +48,7 @@ function AddressFields({ prefix, title }: { prefix: string; title: string }) {
         ZIP *
         <input
           name={`${prefix}.postalCode`}
+          defaultValue={value?.postalCode}
           required
           inputMode="numeric"
           pattern="\d{5}(-\d{4})?"
@@ -62,6 +70,9 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState("");
   const [placed, setPlaced] = useState<{ number: string; email: string } | null>(null);
+  const account = useAccount();
+  const customer = account.status === "signed-in" ? account.customer : null;
+  const [saveDetails, setSaveDetails] = useState(true);
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
@@ -98,6 +109,14 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
       const result = await res.json().catch(() => ({}));
       if (!res.ok || !result.number) throw new Error(result.error || "Your order could not be placed.");
       clearCart();
+      if (customer && saveDetails) {
+        await postAccount("profile", {
+          company: get("company"),
+          phone: get("phone"),
+          billing: address("billing"),
+          shipping: sameAddress ? address("billing") : address("shipping"),
+        }).catch(() => {});
+      }
       setPlaced({ number: result.number, email: get("email") });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Your order could not be placed.");
@@ -123,7 +142,8 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
+    // Re-mounts once the account loads, so its details fill the fields.
+    <form key={account.status} onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
       {/* Left empty by people; bots that fill it in are ignored. */}
       <input
         name="website"
@@ -159,7 +179,7 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
 
       <label className={label}>
         Company / Organization *
-        <input name="company" required autoComplete="organization" className={field} />
+        <input name="company" required defaultValue={customer?.company} autoComplete="organization" className={field} />
       </label>
       <label className={label}>
         PO number
@@ -167,18 +187,24 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
       </label>
       <label className={label}>
         Contact name *
-        <input name="name" required autoComplete="name" className={field} />
+        <input
+          name="name"
+          required
+          defaultValue={customer ? [customer.firstName, customer.lastName].filter(Boolean).join(" ") : undefined}
+          autoComplete="name"
+          className={field}
+        />
       </label>
       <label className={label}>
         Phone *
-        <input name="phone" type="tel" required autoComplete="tel" className={field} />
+        <input name="phone" type="tel" required defaultValue={customer?.phone} autoComplete="tel" className={field} />
       </label>
       <label className={`${label} sm:col-span-2`}>
         Email for the invoice *
-        <input name="email" type="email" required autoComplete="email" className={field} />
+        <input name="email" type="email" required defaultValue={customer?.email} autoComplete="email" className={field} />
       </label>
 
-      <AddressFields prefix="billing" title="Billing address" />
+      <AddressFields prefix="billing" title="Billing address" value={customer?.billing} />
       <label className="flex items-center gap-3 text-[15px] sm:col-span-2">
         <input
           type="checkbox"
@@ -188,12 +214,33 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
         />
         Ship to the billing address
       </label>
-      {!sameAddress && <AddressFields prefix="shipping" title="Shipping address" />}
+      {!sameAddress && <AddressFields prefix="shipping" title="Shipping address" value={customer?.shipping} />}
 
       <label className={`${label} sm:col-span-2`}>
         Notes (delivery instructions, tax exemption, etc.)
         <textarea name="notes" rows={3} className={field} />
       </label>
+
+      {customer ? (
+        <label className="flex items-center gap-3 text-[15px] sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={saveDetails}
+            onChange={(e) => setSaveDetails(e.target.checked)}
+            className="size-4 accent-teal"
+          />
+          Save these details to my account
+        </label>
+      ) : (
+        account.status === "signed-out" && (
+          <p className="text-sm text-muted sm:col-span-2">
+            <Link href="/account/login/?next=/checkout/" className="link-underline">
+              Sign in
+            </Link>{" "}
+            to fill this in from your account and see the order in My Account.
+          </p>
+        )
+      )}
 
       <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
         <button type="submit" className="btn btn-primary" disabled={status === "sending"}>

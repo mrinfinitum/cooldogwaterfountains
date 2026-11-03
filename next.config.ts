@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
       { source: "/dog-water-fountains/", destination: "/", permanent: true },
       // Old WooCommerce URLs.
       { source: "/product-tag/:tag*", destination: "/shop/", permanent: true },
-      { source: "/my-account/:path*", destination: "/", permanent: true },
+      { source: "/my-account/:path*", destination: "/account/", permanent: true },
       // Category pages: with only a handful of fountains, the shop lists them all.
       { source: "/prod-category/:path*", destination: "/shop/", permanent: true },
       // Install guide for basin fountains, which are no longer sold here.

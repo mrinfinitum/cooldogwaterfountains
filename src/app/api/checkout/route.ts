@@ -1,4 +1,5 @@
 import { SHIPPING_RATE } from "@/lib/format";
+import { getSession } from "@/lib/session";
 import { CartError, priceCart, type RequestedItem } from "@/lib/pricing";
 import { SHIPPING_TAX_CODE, stripe } from "@/lib/stripe";
 
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     },
   }));
 
+  const signedIn = await getSession();
   const origin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || new URL(request.url).origin;
 
@@ -53,6 +55,8 @@ export async function POST(request: Request) {
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
       customer_creation: "always",
+      // Signed-in customers start with their account email (orders are matched to accounts by email).
+      ...(signedIn ? { customer_email: signedIn.email } : {}),
       shipping_options: [
         {
           shipping_rate_data: {

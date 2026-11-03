@@ -49,6 +49,7 @@ export const COMPANY_LINKS = [
   { href: "/dog-water-fountain-mission/", label: "Our Mission" },
   { href: "/dogs-love-water/", label: "Dogs Love Water" },
   { href: "/contact-us/", label: "Contact Us" },
+  { href: "/account/", label: "My Account" },
 ];
 
 export const LEGAL_LINKS = [
