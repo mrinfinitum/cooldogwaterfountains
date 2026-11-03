@@ -36,7 +36,6 @@ export async function GET() {
   const guides = [
     "dog-water-fountain-colors",
     "dog-water-fountain-plumbing",
-    "water-fountain-install",
     "installation-fresh-flow-fountains",
     "dog-park-designs",
     "dog-water-fountain-resources",

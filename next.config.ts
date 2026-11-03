@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
       { source: "/my-account/:path*", destination: "/", permanent: true },
       // Category pages: with only a handful of fountains, the shop lists them all.
       { source: "/prod-category/:path*", destination: "/shop/", permanent: true },
+      // Install guide for basin fountains, which are no longer sold here.
+      { source: "/water-fountain-install/", destination: "/installation-fresh-flow-fountains/", permanent: true },
       // Fountains no longer sold on this site.
       ...[
         "cool-dog-drink-cool-bottle-filler-with-pet-hose-single-dog-basin-sst",

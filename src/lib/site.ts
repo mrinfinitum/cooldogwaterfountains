@@ -37,7 +37,6 @@ export const media = (file: string) => `/media/${file}`;
 export const RESOURCE_LINKS = [
   { href: "/dog-water-fountain-colors/", label: "Colors" },
   { href: "/dog-water-fountain-plumbing/", label: "Plumbing" },
-  { href: "/water-fountain-install/", label: "Installation – Basin Fountains" },
   {
     href: "/installation-fresh-flow-fountains/",
     label: "Installation – Fresh Flow Fountains",
