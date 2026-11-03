@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Product and page photos are served from the CMS's media library.
-const cms = new URL(process.env.CMS_URL || "https://dog-park-company-cms.mystagingwebsite.com");
+const cms = new URL(process.env.CMS_URL || "https://cms.thedogparkcompany.com");
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
