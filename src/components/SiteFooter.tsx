@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { getProducts } from "@/lib/content";
 import { shortName } from "@/lib/format";
+import ResourceLinkItem from "./sheets/ResourceLinkItem";
 import { CONTACT, COMPANY_LINKS, LEGAL_LINKS, LOGO_LIGHT, RESOURCE_LINKS, media } from "@/lib/site";
 import { Wave } from "./icons";
 
@@ -106,9 +107,9 @@ export default async function SiteFooter() {
 
         <FooterColumn title="Resources" className="lg:col-span-2">
           {RESOURCE_LINKS.map((l) => (
-            <FooterLink key={l.href} href={l.href}>
-              {l.label}
-            </FooterLink>
+            <li key={l.label}>
+              <ResourceLinkItem link={l} className="hover:text-aqua" />
+            </li>
           ))}
         </FooterColumn>
 

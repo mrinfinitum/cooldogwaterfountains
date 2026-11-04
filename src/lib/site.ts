@@ -1,3 +1,5 @@
+import { SHEETS, type SheetKey } from "./sheets";
+
 // Site-wide settings. Content lives in the Headless Commerce CMS (WordPress); checkout runs on Stripe.
 
 export const SITE_URL = (
@@ -34,15 +36,17 @@ export const HERO_POSTER = "/media/hero-dog-drinking-poster.jpg";
 /** Design images and media stored with the site in /public/media/. */
 export const media = (file: string) => `/media/${file}`;
 
-export const RESOURCE_LINKS = [
-  { href: "/dog-water-fountain-colors/", label: "Colors" },
-  { href: "/dog-water-fountain-plumbing/", label: "Plumbing" },
-  {
-    href: "/installation-fresh-flow-fountains/",
-    label: "Installation – Fresh Flow Fountains",
-  },
+/**
+ * The Resources menu: planning sheets open in an overlay (with a PDF
+ * download) rather than as pages; the rest are ordinary links.
+ */
+export type ResourceLink =
+  | { label: string; sheet: SheetKey; href?: undefined }
+  | { label: string; href: string; sheet?: undefined };
+
+export const RESOURCE_LINKS: ResourceLink[] = [
+  ...SHEETS.map((s) => ({ label: s.title, sheet: s.key })),
   { href: "/dog-park-designs/", label: "Dog Park Designs" },
-  { href: "/dog-water-fountain-resources/", label: "Architects & Contractors" },
 ];
 
 export const COMPANY_LINKS = [

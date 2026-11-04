@@ -29,7 +29,16 @@ const nextConfig: NextConfig = {
       // Category pages: with only a handful of fountains, the shop lists them all.
       { source: "/prod-category/:path*", destination: "/shop/", permanent: true },
       // Install guide for basin fountains, which are no longer sold here.
-      { source: "/water-fountain-install/", destination: "/installation-fresh-flow-fountains/", permanent: true },
+      { source: "/water-fountain-install/", destination: "/shop/", permanent: true },
+      // Pages retired from the site: planning sheets now open over product pages
+      // (with PDF downloads); the rest were unused. See RETIRED_PAGE_SLUGS.
+      ...[
+        "dog-water-fountain-colors",
+        "dog-water-fountain-plumbing",
+        "installation-fresh-flow-fountains",
+        "dog-water-fountain-resources",
+        "success",
+      ].map((slug) => ({ source: `/${slug}/`, destination: "/shop/", permanent: true })),
       // Fountains no longer sold on this site.
       ...[
         "cool-dog-drink-cool-bottle-filler-with-pet-hose-single-dog-basin-sst",

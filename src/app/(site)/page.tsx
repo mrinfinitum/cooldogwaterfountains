@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import SheetButton from "@/components/sheets/SheetButton";
 import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
 import {
@@ -203,9 +204,9 @@ export default async function HomePage() {
               Cool Dog fountains come in a range of cool colors to fit your dog play space or your
               brand — and we offer custom colors too.
             </p>
-            <Link href="/dog-water-fountain-colors/" className="btn btn-light mt-8">
+            <SheetButton sheet="colors" className="btn btn-light mt-8">
               See All Colors
-            </Link>
+            </SheetButton>
           </div>
           <div className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 lg:col-span-8 lg:mx-0 lg:grid lg:grid-cols-6 lg:overflow-visible lg:px-0">
             {COLOR_CHIPS.map((chip, i) => (
@@ -261,12 +262,12 @@ export default async function HomePage() {
           cta="Plan Your Park"
         />
         <StoryBanner
-          href="/dog-water-fountain-resources/"
+          href="/shop/"
           image={media("DSC_9804_WM-scaled-1.jpg")}
           alt="A shaded dog park with turf and agility equipment"
           eyebrow="Architects & Contractors"
-          title="Specs & resources"
-          cta="Get Resources"
+          title="Specs & CAD"
+          cta="Find Your Fountain"
         />
       </section>
     </>

@@ -129,7 +129,7 @@ export default function ProductView(props: Props) {
   return (
     <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
       {/* Gallery: thumbnails down the side on desktop, underneath on phones */}
-      <div className="flex flex-col-reverse gap-3 lg:col-span-7 lg:flex-row lg:items-start">
+      <div className="flex min-w-0 flex-col-reverse gap-3 lg:col-span-7 lg:flex-row lg:items-start">
         {thumbnails}
         <div className="relative aspect-square flex-1 overflow-hidden bg-mist">
           {current && (

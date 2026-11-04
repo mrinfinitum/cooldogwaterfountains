@@ -1,3 +1,4 @@
+import { SHEETS } from "@/lib/sheets";
 import { getPages, getProducts } from "@/lib/content";
 import { formatPrice } from "@/lib/format";
 import { pageMetadata, productMetadata } from "@/lib/seo";
@@ -33,13 +34,7 @@ export async function GET() {
     const page = contentPages.find((p) => p.slug === slug);
     return page ? link(page.title, `/${page.slug}/`, text(pageMetadata(page).description)) : null;
   };
-  const guides = [
-    "dog-water-fountain-colors",
-    "dog-water-fountain-plumbing",
-    "installation-fresh-flow-fountains",
-    "dog-park-designs",
-    "dog-water-fountain-resources",
-  ];
+  const guides = ["dog-park-designs"];
   const listed = new Set([...guides, "dog-water-fountains-policy", "dog-water-fountains-terms"]);
 
   const body = [
@@ -61,6 +56,7 @@ export async function GET() {
     "",
     "## Planning, installation and specifications",
     "",
+    ...SHEETS.map((s) => link(`${s.title} (PDF)`, s.pdf, `${s.blurb}.`)),
     ...guides.map(pageLine).filter((l): l is string => Boolean(l)),
     "",
     "## Company",

@@ -6,6 +6,8 @@ import CartButton from "./cart/CartButton";
 import { CONTACT, COMPANY_LINKS, LOGO, RESOURCE_LINKS, media } from "@/lib/site";
 import { ChevronIcon, PhoneIcon, UserIcon } from "./icons";
 import MobileMenu from "./MobileMenu";
+import ResourceLinkItem from "./sheets/ResourceLinkItem";
+import SheetButton from "./sheets/SheetButton";
 
 export default async function SiteHeader() {
   const products = await getProducts();
@@ -56,30 +58,29 @@ export default async function SiteHeader() {
               </li>
 
               <li className="group flex h-full items-center">
-                <Link
-                  href="/dog-water-fountain-resources/"
+                <button
+                  type="button"
                   className="eyebrow flex items-center gap-1 py-2 hover:text-teal"
+                  aria-haspopup="true"
                 >
                   Resources <ChevronIcon width={14} height={14} />
-                </Link>
+                </button>
                 <div className="invisible absolute inset-x-0 top-full border-y border-line bg-white opacity-0 shadow-[0_24px_40px_-24px_rgba(7,34,43,0.35)] transition duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
                   <div className="mx-auto grid max-w-[1600px] grid-cols-12 gap-8 px-8 py-10">
                     <div className="col-span-4">
                       <p className="eyebrow mb-4 text-muted">Plan & Install</p>
                       <ul className="space-y-2.5">
                         {RESOURCE_LINKS.map((l) => (
-                          <li key={l.href}>
-                            <Link href={l.href} className="text-[15px] hover:text-teal">
-                              {l.label}
-                            </Link>
+                          <li key={l.label}>
+                            <ResourceLinkItem link={l} className="text-[15px] hover:text-teal" />
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div className="col-span-8 grid grid-cols-2 gap-6">
-                      <Link
-                        href="/dog-water-fountain-colors/"
-                        className="group/card relative block aspect-[16/9] overflow-hidden bg-foam"
+                      <SheetButton
+                        sheet="colors"
+                        className="group/card relative block aspect-[16/9] w-full overflow-hidden bg-foam"
                       >
                         <Image
                           src={media("DL-2000-STE-BLU-lifestyle.jpg")}
@@ -92,9 +93,9 @@ export default async function SiteHeader() {
                           <span className="headline block text-3xl">Color Play®</span>
                           <span className="eyebrow mt-2 inline-block">See the Colors</span>
                         </span>
-                      </Link>
+                      </SheetButton>
                       <Link
-                        href="/dog-water-fountain-resources/"
+                        href="/shop/"
                         className="group/card relative block aspect-[16/9] overflow-hidden bg-foam"
                       >
                         <Image
@@ -106,7 +107,7 @@ export default async function SiteHeader() {
                         />
                         <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-5 pt-16 text-white">
                           <span className="headline block text-3xl">Architects & Contractors</span>
-                          <span className="eyebrow mt-2 inline-block">Get Resources</span>
+                          <span className="eyebrow mt-2 inline-block">Spec Sheets &amp; CAD on Every Product</span>
                         </span>
                       </Link>
                     </div>

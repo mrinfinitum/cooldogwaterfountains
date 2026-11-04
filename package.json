@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "photos": "node scripts/photos/build.mjs"
+    "photos": "node scripts/photos/build.mjs",
+    "sheets": "node scripts/build-sheets.mjs"
   },
   "dependencies": {
     "@next/third-parties": "16.4.3",

@@ -183,7 +183,26 @@ export async function getProduct(slug: string): Promise<Product | null> {
 /** Pages with their own routes rather than the generic page template. */
 export const RESERVED_PAGE_SLUGS = new Set(["contact-us"]);
 
+/**
+ * Pages that are no longer pages on the site: their content now opens as an
+ * overlay sheet (with a PDF download) from product pages and the menus, or
+ * they are unused. Their old addresses redirect (next.config.ts).
+ */
+export const RETIRED_PAGE_SLUGS = new Set([
+  "dog-water-fountain-colors",
+  "dog-water-fountain-plumbing",
+  "installation-fresh-flow-fountains",
+  "dog-water-fountain-resources",
+  "success",
+]);
+
+/** The site's pages (retired ones excluded). */
 export async function getPages(): Promise<Page[]> {
+  return (await getAllPages()).filter((p) => !RETIRED_PAGE_SLUGS.has(p.slug));
+}
+
+/** Every published CMS page, including those shown only as sheets. */
+export async function getAllPages(): Promise<Page[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("cms", "pages");

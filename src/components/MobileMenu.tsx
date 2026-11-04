@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState, type MouseEvent } from "react";
-import { CONTACT } from "@/lib/site";
+import { CONTACT, type ResourceLink } from "@/lib/site";
+import ResourceLinkItem from "./sheets/ResourceLinkItem";
 import { CloseIcon, MenuIcon, PhoneIcon } from "./icons";
 
 type NavLink = { href: string; label: string };
@@ -13,14 +14,14 @@ export default function MobileMenu({
   company,
 }: {
   products: NavLink[];
-  resources: NavLink[];
+  resources: ResourceLink[];
   company: NavLink[];
 }) {
   const [open, setOpen] = useState(false);
 
   // Close the drawer when any link inside it is followed.
   const closeOnLink = (event: MouseEvent) => {
-    if ((event.target as HTMLElement).closest("a")) setOpen(false);
+    if ((event.target as HTMLElement).closest("a, [data-sheet]")) setOpen(false);
   };
 
   useEffect(() => {
@@ -83,10 +84,8 @@ export default function MobileMenu({
                 <summary className="headline cursor-pointer list-none text-3xl">Resources</summary>
                 <ul className="mt-3 space-y-2.5">
                   {resources.map((l) => (
-                    <li key={l.href}>
-                      <Link href={l.href} className="text-[15px]">
-                        {l.label}
-                      </Link>
+                    <li key={l.label}>
+                      <ResourceLinkItem link={l} className="text-[15px]" />
                     </li>
                   ))}
                 </ul>

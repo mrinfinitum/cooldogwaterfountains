@@ -9,7 +9,8 @@ import ProductDocuments from "@/components/ProductDocuments";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
-import { RESOURCE_LINKS, SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/site";
+import PlanningList from "@/components/sheets/PlanningList";
 import { firstParagraph, highlights, productFacts, productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
 import { getProductDocuments } from "@/lib/documents";
@@ -92,8 +93,8 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
       />
 
       {/* Details: the full description, with the key facts, downloads and resources beside it */}
-      <section className="mt-20 grid gap-12 border-t border-line pt-14 lg:grid-cols-12 lg:gap-14">
-        <div className="lg:col-span-7">
+      <section className="mt-20 grid grid-cols-1 gap-12 border-t border-line pt-14 lg:grid-cols-12 lg:gap-14">
+        <div className="min-w-0 lg:col-span-7">
           <p className="eyebrow text-teal">Details &amp; features</p>
           <h2 className="headline mt-3 text-4xl lg:text-5xl">{shortName(product.name)}</h2>
           <RichText html={product.descriptionHtml} className="mt-8 max-w-[68ch] text-[16px] leading-relaxed" />
@@ -188,15 +189,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
 
             <div>
               <h2 className="eyebrow">Planning &amp; installation</h2>
-              <ul className="mt-4 space-y-2 text-[15px]">
-                {RESOURCE_LINKS.map((l) => (
-                  <li key={l.href}>
-                    <Link href={l.href} className="link-underline">
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <PlanningList />
             </div>
           </div>
         </aside>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import AnnouncementBar from "./AnnouncementBar";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import SheetHost from "./sheets/SheetHost";
 
 /** Header, footer and skip link around the public site's pages. */
 export default function SiteChrome({ children }: { children: ReactNode }) {
@@ -19,6 +20,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
         {children}
       </main>
       <SiteFooter />
+      <SheetHost />
     </>
   );
 }

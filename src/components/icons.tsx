@@ -107,6 +107,33 @@ export const RulerIcon = (p: IconProps) => (
   </svg>
 );
 
+export const DownloadIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+  </svg>
+);
+
+export const EyeIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="2.8" />
+  </svg>
+);
+
+export const WrenchIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 1-2-2Z" />
+    <path d="M14.5 6.5 17 4l3 3-2.5 2.5" />
+  </svg>
+);
+
+export const PipeIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M4 7h7a3 3 0 0 1 3 3v10M4 11h5a1 1 0 0 1 1 1v8" />
+    <path d="M4 5v8M12 20h4" />
+  </svg>
+);
+
 /** A soft wave line used as a section divider. */
 export function Wave({ className = "" }: { className?: string }) {
   return (
