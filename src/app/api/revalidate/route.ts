@@ -16,6 +16,5 @@ export async function POST(request: Request) {
     return Response.json({ revalidated: false, error: "Unauthorized" }, { status: 401 });
   }
   revalidateTag("cms", "max");
-  revalidateTag("docs", "max");
   return Response.json({ revalidated: true });
 }

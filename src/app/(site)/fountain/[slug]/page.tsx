@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
-import { formatBytes, seriesOf, shortName } from "@/lib/format";
+import { seriesOf, shortName } from "@/lib/format";
 import { swatchColor } from "@/lib/colors";
-import ProductDocuments from "@/components/ProductDocuments";
+import ProductDownloads from "@/components/ProductDownloads";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
@@ -13,7 +13,6 @@ import { SITE_NAME } from "@/lib/site";
 import PlanningList from "@/components/sheets/PlanningList";
 import { firstParagraph, highlights, productFacts, productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
-import { getProductDocuments } from "@/lib/documents";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -34,7 +33,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [all, documents] = await Promise.all([getProducts(), getProductDocuments(product.slug)]);
+  const all = await getProducts();
   const related = all.filter((p) => p.id !== product.id).slice(0, 4);
   const series = seriesOf(product.sku);
   const facts = productFacts(product.descriptionHtml);
@@ -149,42 +148,12 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
               )}
             </div>
 
-            {documents.length > 0 ? (
+            {product.downloads.length > 0 && (
+              // Files attached to the product in the CMS (Downloads box).
               <div>
-                <h2 className="eyebrow">Documents</h2>
-                <ProductDocuments
-                  docs={documents.map((d) => ({
-                    slug: d.slug,
-                    title: d.title,
-                    typeName: d.type.name,
-                    ext: d.file.ext,
-                    size: d.file.size,
-                    pages: d.file.pages,
-                    viewable: d.kind === "pdf" || d.kind === "image" || d.file.ext === "dxf",
-                    url: d.url,
-                    downloadUrl: d.downloadUrl,
-                    embedUrl: d.embedUrl,
-                  }))}
-                />
+                <h2 className="eyebrow">Downloads</h2>
+                <ProductDownloads downloads={product.downloads} />
               </div>
-            ) : (
-              product.downloads.length > 0 && (
-                // Files still attached in the CMS's Downloads box (until they move to the library).
-                <div>
-                  <h2 className="eyebrow">Downloads</h2>
-                  <ul className="mt-4 space-y-3 text-[15px]">
-                    {product.downloads.map((d) => (
-                      <li key={d.url}>
-                        <a href={d.url} target="_blank" rel="noopener" className="group flex items-baseline gap-3">
-                          <span className="eyebrow shrink-0 bg-white px-2 py-1 text-[10px]">{d.type || "File"}</span>
-                          <span className="link-underline group-hover:text-teal">{d.label}</span>
-                          {d.size ? <span className="text-sm text-muted">{formatBytes(d.size)}</span> : null}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
             )}
 
             <div>
