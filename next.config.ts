@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: cms.hostname, pathname: "/wp-content/uploads/**" },
     ],
   },
+  // Previews (dev.cooldogwaterfountains.com and branch deploys) are never indexed.
+  async headers() {
+    return process.env.VERCEL_ENV === "production"
+      ? []
+      : [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }];
+  },
   async redirects() {
     return [
       // The old WordPress front page.
