@@ -74,7 +74,7 @@ export function buildMetadata({
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
 /** HTML to plain text (tags dropped, common entities decoded). */
-function plainText(html: string): string {
+export function plainText(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
     .replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (m, e: string) =>
@@ -87,12 +87,38 @@ function plainText(html: string): string {
 }
 
 /** First paragraph of rich text with real sentence content. */
-function firstParagraph(html: string): string | undefined {
+export function firstParagraph(html: string): string | undefined {
   for (const [, inner] of html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
     const text = plainText(inner);
     if (text.length >= 60 && /[a-z]{3}/.test(text)) return text;
   }
   return undefined;
+}
+
+/** The first few bullet points of rich text (short ones only), for a product's key highlights. */
+export function highlights(html: string, count = 4, colors: string[] = []): string[] {
+  const colorNames = colors.map((c) => c.toLowerCase().replace(/\s*\(.*\)$/, ""));
+  const items = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+    .map(([, inner]) => plainText(inner))
+    .filter((text) => text.length >= 12 && text.length <= 90)
+    // Not colour or option lists ("Green (GRN)", "Stainless Steel (SLV)").
+    .filter((text) => !/\([A-Z]{2,5}\)\s*$/.test(text) && !colorNames.includes(text.toLowerCase()));
+  return [...new Set(items)].slice(0, count);
+}
+
+/** Warranty and "sold separately" notes from a product description, for its key facts. */
+export function productFacts(html: string): { warranty?: string; soldSeparately?: string } {
+  const paragraphs = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(([, inner]) => plainText(inner));
+  const WORDS: Record<string, string> = { one: "1", two: "2", three: "3", four: "4", five: "5", ten: "10" };
+  const found = plainText(html).match(/\b(\d+|one|two|three|four|five|ten)[\s-]*(?:year|yr)s?(?:\s+\w+)?\s+warranty/i)?.[1];
+  const years = found ? (WORDS[found.toLowerCase()] ?? found) : undefined;
+  const separately = paragraphs
+    .find((p) => /sold separately/i.test(p) && p.length < 160)
+    ?.replace(/\s*(?:are|is)?\s*sold separately\.?\s*$/i, "");
+  return {
+    ...(years ? { warranty: `${years} ${years === "1" ? "year" : "years"}` } : {}),
+    ...(separately ? { soldSeparately: separately } : {}),
+  };
 }
 
 export function productMetadata(product: Product): Metadata {

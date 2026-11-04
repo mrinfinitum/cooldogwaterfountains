@@ -5,19 +5,22 @@ import Link from "next/link";
 import SaveButton from "./account/SaveButton";
 import { gaItem, track } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { swatchColor } from "@/lib/colors";
 import { addToCart } from "@/lib/cart";
 import type { ColorOption, ProductImage } from "@/lib/content";
 import { CONTACT } from "@/lib/site";
 import Price from "./Price";
-import { DropIcon, FlagIcon, PhoneIcon, RulerIcon } from "./icons";
+import { CheckIcon, DropIcon, FlagIcon, PhoneIcon, RulerIcon } from "./icons";
 
 type Props = {
   name: string;
   sku: string;
   series?: string;
-  summary: string;
+  /** A short intro for the buy box (2–3 lines). */
+  lead?: string;
+  /** Key selling points shown as a checklist under the intro. */
+  highlights?: string[];
   price: number;
   regularPrice: number;
   priceLabel?: string;
@@ -25,7 +28,6 @@ type Props = {
   images: ProductImage[];
   variations: ColorOption[];
   slug: string;
-  children?: ReactNode;
 };
 
 const pickDefault = (variations: ColorOption[]) =>
@@ -41,7 +43,7 @@ const useQueryString = () =>
   );
 
 export default function ProductView(props: Props) {
-  const { name, slug, sku, series, summary, images, variations, inStock, children } = props;
+  const { name, slug, sku, series, lead, highlights = [], images, variations, inStock } = props;
 
   // A product card can link here with ?color=… to open on that color.
   const query = useQueryString();
@@ -101,11 +103,35 @@ export default function ProductView(props: Props) {
     setImageIndex(0);
   };
 
+  const thumbnails = gallery.length > 1 && (
+    <ul
+      className="no-scrollbar flex gap-3 overflow-x-auto lg:max-h-[640px] lg:flex-col lg:overflow-y-auto lg:overflow-x-visible"
+      aria-label="Product photos"
+    >
+      {gallery.map((img, i) => (
+        <li key={img.src} className="shrink-0">
+          <button
+            type="button"
+            onClick={() => setImageIndex(i)}
+            aria-label={`Show photo ${i + 1}`}
+            aria-current={i === imageIndex}
+            className={`relative block size-16 overflow-hidden bg-mist outline-offset-2 sm:size-20 ${
+              i === imageIndex ? "outline-2 outline-teal" : "opacity-70 hover:opacity-100"
+            }`}
+          >
+            <Image src={img.src} alt="" fill sizes="80px" className="object-contain" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
-      {/* Gallery */}
-      <div className="lg:col-span-7">
-        <div className="relative aspect-square overflow-hidden bg-mist">
+    <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+      {/* Gallery: thumbnails down the side on desktop, underneath on phones */}
+      <div className="flex flex-col-reverse gap-3 lg:col-span-7 lg:flex-row lg:items-start">
+        {thumbnails}
+        <div className="relative aspect-square flex-1 overflow-hidden bg-mist">
           {current && (
             <Image
               key={current.src}
@@ -113,52 +139,44 @@ export default function ProductView(props: Props) {
               alt={current.alt}
               fill
               priority
-              sizes="(min-width: 1024px) 58vw, 100vw"
+              sizes="(min-width: 1600px) 840px, (min-width: 1024px) 52vw, 100vw"
               className="object-contain"
             />
           )}
         </div>
-        {gallery.length > 1 && (
-          <ul className="no-scrollbar mt-3 flex gap-3 overflow-x-auto" aria-label="Product photos">
-            {gallery.map((img, i) => (
-              <li key={img.src} className="shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setImageIndex(i)}
-                  aria-label={`Show photo ${i + 1}`}
-                  aria-current={i === imageIndex}
-                  className={`relative block size-20 overflow-hidden bg-mist outline-offset-2 sm:size-24 ${
-                    i === imageIndex ? "outline-2 outline-teal" : "opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <Image src={img.src} alt="" fill sizes="96px" className="object-contain" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      {/* Purchase panel */}
+      {/* Buy box */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-28">
           <p className="eyebrow text-muted">
             {series ? `${series} Series · ` : ""}SKU {variation?.sku ?? sku}
           </p>
-          <h1 className="headline mt-3 text-5xl text-deep lg:text-6xl">{name}</h1>
+          <h1 className="headline mt-3 text-4xl text-deep sm:text-5xl">{name}</h1>
 
-          <div className="mt-6">
+          <div className="mt-5">
             <Price price={price} regularPrice={regularPrice} label={props.priceLabel} size="lg" />
           </div>
 
-          {summary && <p className="mt-6 leading-relaxed text-ink/75">{summary}</p>}
+          {lead && <p className="mt-5 line-clamp-3 leading-relaxed text-ink/75">{lead}</p>}
+
+          {highlights.length > 0 && (
+            <ul className="mt-5 grid gap-2 text-[15px]">
+              {highlights.map((h) => (
+                <li key={h} className="flex gap-2.5">
+                  <CheckIcon width={18} height={18} className="mt-0.5 shrink-0 text-teal" />
+                  <span>{h}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {variations.length > 0 && (
-            <fieldset className="mt-8">
+            <fieldset className="mt-7">
               <legend className="eyebrow">
                 Color: <span className="text-teal">{shownColor?.color}</span>
               </legend>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-2.5">
                 {variations.map((v) => (
                   <button
                     key={v.id}
@@ -171,7 +189,7 @@ export default function ProductView(props: Props) {
                     aria-pressed={v.id === variation?.id}
                     aria-label={v.color}
                     title={v.color}
-                    className={`size-10 rounded-full border border-black/15 outline-offset-[3px] transition ${
+                    className={`size-9 rounded-full border border-black/15 outline-offset-[3px] transition ${
                       v.id === variation?.id
                         ? "outline-2 outline-teal"
                         : "hover:outline-1 hover:outline-ink/40"
@@ -183,7 +201,7 @@ export default function ProductView(props: Props) {
             </fieldset>
           )}
 
-          <div className="mt-8 flex items-stretch gap-3">
+          <div className="mt-7 flex items-stretch gap-3">
             <div className="flex items-center border border-ink/20">
               <button
                 type="button"
@@ -213,34 +231,30 @@ export default function ProductView(props: Props) {
               <span className="btn flex-1 cursor-not-allowed bg-line text-muted">Out of Stock</span>
             )}
           </div>
-          <Link href={quoteHref} className="btn btn-outline mt-3 w-full">
-            Request a Quote
-          </Link>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-3 flex items-center gap-4">
+            <Link href={quoteHref} className="btn btn-outline flex-1">
+              Request a Quote
+            </Link>
             <SaveButton slug={slug} />
           </div>
 
-          <ul className="mt-8 grid gap-3 border-y border-line py-6 text-sm">
-            <li className="flex items-center gap-3">
-              <FlagIcon className="shrink-0 text-teal" /> Designed and manufactured in the USA
+          <ul className="mt-7 grid grid-cols-3 gap-3 border-t border-line pt-6 text-center text-xs leading-snug text-ink/75">
+            <li className="flex flex-col items-center gap-2">
+              <FlagIcon className="text-teal" /> Made in the USA
             </li>
-            <li className="flex items-center gap-3">
-              <DropIcon className="shrink-0 text-teal" /> Contractor pricing — volume quotes
-              available
+            <li className="flex flex-col items-center gap-2">
+              <DropIcon className="text-teal" /> Contractor &amp; volume pricing
             </li>
-            <li className="flex items-center gap-3">
-              <RulerIcon className="shrink-0 text-teal" /> Installation and assembly available in
-              the USA
+            <li className="flex flex-col items-center gap-2">
+              <RulerIcon className="text-teal" /> Installation support
             </li>
           </ul>
           <a
             href={CONTACT.phoneHref}
-            className="eyebrow mt-6 inline-flex items-center gap-2 hover:text-teal"
+            className="eyebrow mt-6 flex items-center justify-center gap-2 text-[11px] hover:text-teal"
           >
-            <PhoneIcon width={16} height={16} /> Questions? Call {CONTACT.phone}
+            <PhoneIcon width={15} height={15} /> Questions? {CONTACT.phone}
           </a>
-
-          {children && <div className="mt-8">{children}</div>}
         </div>
       </div>
     </div>

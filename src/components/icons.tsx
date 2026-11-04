@@ -42,6 +42,12 @@ export const UserIcon = (p: IconProps) => (
   </svg>
 );
 
+export const CheckIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
+
 export const MenuIcon = (p: IconProps) => (
   <svg {...base} {...p}>
     <path d="M3 7h18M3 12h18M3 17h18" />

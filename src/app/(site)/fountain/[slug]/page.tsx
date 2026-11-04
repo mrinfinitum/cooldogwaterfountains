@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
-import { seriesOf, formatBytes } from "@/lib/format";
+import { formatBytes, seriesOf, shortName } from "@/lib/format";
+import { swatchColor } from "@/lib/colors";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
-import { ChevronIcon } from "@/components/icons";
 import { RESOURCE_LINKS, SITE_NAME } from "@/lib/site";
-import { productMetadata } from "@/lib/seo";
+import { firstParagraph, highlights, productFacts, productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
 
 export async function generateStaticParams() {
@@ -27,26 +26,6 @@ export async function generateMetadata({
 }
 
 
-function Accordion({
-  title,
-  children,
-  open = false,
-}: {
-  title: string;
-  children: ReactNode;
-  open?: boolean;
-}) {
-  return (
-    <details open={open} className="group border-b border-line">
-      <summary className="eyebrow flex cursor-pointer list-none items-center justify-between py-5">
-        <h2>{title}</h2>
-        <ChevronIcon className="transition group-open:rotate-180" />
-      </summary>
-      <div className="pb-6">{children}</div>
-    </details>
-  );
-}
-
 async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "params">) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -54,6 +33,8 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
 
   const all = await getProducts();
   const related = all.filter((p) => p.id !== product.id).slice(0, 4);
+  const series = seriesOf(product.sku);
+  const facts = productFacts(product.descriptionHtml);
 
   // Structured data for search engines.
   const jsonLd = {
@@ -97,59 +78,106 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
         name={product.name}
         slug={product.slug}
         sku={product.sku}
-        series={seriesOf(product.sku)}
-        summary={product.summary}
+        series={series}
+        lead={firstParagraph(product.descriptionHtml)}
+        highlights={highlights(product.descriptionHtml, 4, product.colors)}
         price={product.price}
         regularPrice={product.regularPrice}
         priceLabel={product.priceLabel}
         inStock={product.inStock}
         images={product.images}
         variations={product.options}
-      >
-        <div className="border-t border-line">
-          <Accordion title="Details & Features" open>
-            <RichText html={product.descriptionHtml} className="text-[15px]" />
-          </Accordion>
-          <Accordion title="Colors">
-            <p className="text-[15px] text-ink/80">
-              Available in {product.colors.join(", ")}. Custom colors are available through our
-              Color Play® program.
-            </p>
-            <Link
-              href="/dog-water-fountain-colors/"
-              className="link-underline mt-3 inline-block text-[15px]"
-            >
-              See all colors
-            </Link>
-          </Accordion>
-          {product.downloads.length > 0 && (
-            <Accordion title="Downloads" open>
-              <ul className="space-y-3 text-[15px]">
-                {product.downloads.map((d) => (
-                  <li key={d.url}>
-                    <a href={d.url} target="_blank" rel="noopener" className="group flex items-baseline gap-3">
-                      <span className="eyebrow shrink-0 bg-mist px-2 py-1 text-[10px]">{d.type || "File"}</span>
-                      <span className="link-underline group-hover:text-teal">{d.label}</span>
-                      {d.size ? <span className="text-sm text-muted">{formatBytes(d.size)}</span> : null}
-                    </a>
+      />
+
+      {/* Details: the full description, with the key facts, downloads and resources beside it */}
+      <section className="mt-20 grid gap-12 border-t border-line pt-14 lg:grid-cols-12 lg:gap-14">
+        <div className="lg:col-span-7">
+          <p className="eyebrow text-teal">Details &amp; features</p>
+          <h2 className="headline mt-3 text-4xl lg:text-5xl">{shortName(product.name)}</h2>
+          <RichText html={product.descriptionHtml} className="mt-8 max-w-[68ch] text-[16px] leading-relaxed" />
+        </div>
+
+        <aside className="lg:col-span-5">
+          <div className="space-y-8 bg-mist p-7 lg:sticky lg:top-28">
+            <div>
+              <h2 className="eyebrow">At a glance</h2>
+              <dl className="mt-4 divide-y divide-line text-[15px]">
+                <div className="flex justify-between gap-4 py-2.5">
+                  <dt className="text-muted">SKU</dt>
+                  <dd className="font-medium">{product.sku}</dd>
+                </div>
+                {series && (
+                  <div className="flex justify-between gap-4 py-2.5">
+                    <dt className="text-muted">Series</dt>
+                    <dd className="font-medium">{series}</dd>
+                  </div>
+                )}
+                {product.options.length > 0 && (
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <dt className="text-muted">Colors</dt>
+                    <dd className="flex items-center gap-1.5">
+                      {product.options.map((o) => (
+                        <span
+                          key={o.id}
+                          title={o.color}
+                          className="size-4 rounded-full border border-black/15"
+                          style={{ background: o.swatch ?? swatchColor(o.color) }}
+                        />
+                      ))}
+                    </dd>
+                  </div>
+                )}
+                {facts.warranty && (
+                  <div className="flex justify-between gap-4 py-2.5">
+                    <dt className="text-muted">Warranty</dt>
+                    <dd className="font-medium">{facts.warranty}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between gap-4 py-2.5">
+                  <dt className="text-muted">Made in</dt>
+                  <dd className="font-medium">USA</dd>
+                </div>
+              </dl>
+              {facts.soldSeparately && (
+                <p className="mt-4 text-sm leading-relaxed text-ink/75">
+                  <span className="font-semibold text-ink">Sold separately: </span>
+                  {facts.soldSeparately}
+                </p>
+              )}
+            </div>
+
+            {product.downloads.length > 0 && (
+              <div>
+                <h2 className="eyebrow">Downloads</h2>
+                <ul className="mt-4 space-y-3 text-[15px]">
+                  {product.downloads.map((d) => (
+                    <li key={d.url}>
+                      <a href={d.url} target="_blank" rel="noopener" className="group flex items-baseline gap-3">
+                        <span className="eyebrow shrink-0 bg-white px-2 py-1 text-[10px]">{d.type || "File"}</span>
+                        <span className="link-underline group-hover:text-teal">{d.label}</span>
+                        {d.size ? <span className="text-sm text-muted">{formatBytes(d.size)}</span> : null}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div>
+              <h2 className="eyebrow">Planning &amp; installation</h2>
+              <ul className="mt-4 space-y-2 text-[15px]">
+                {RESOURCE_LINKS.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="link-underline">
+                      {l.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
-            </Accordion>
-          )}
-          <Accordion title="Installation & Specs">
-            <ul className="space-y-2 text-[15px]">
-              {RESOURCE_LINKS.filter((l) => !/colors/i.test(l.label)).map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="link-underline">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Accordion>
-        </div>
-      </ProductView>
+            </div>
+          </div>
+        </aside>
+      </section>
 
       {related.length > 0 && (
         <section className="mt-24 border-t border-line pt-16">
