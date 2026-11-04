@@ -57,7 +57,8 @@ export default function ProductCardView({
               src={first.src}
               alt={first.alt}
               fill
-              priority={priority}
+              loading={priority ? "eager" : undefined}
+              fetchPriority={priority ? "high" : undefined}
               sizes={SIZES}
               className={`object-contain transition duration-500 ${
                 preview?.image

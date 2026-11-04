@@ -142,7 +142,7 @@ export default async function SiteHeader() {
             alt="Cool Dog Water Fountains"
             width={LOGO.width}
             height={LOGO.height}
-            priority
+            loading="eager"
             sizes="(min-width: 1024px) 156px, 112px"
             className="h-10 w-auto lg:h-14"
           />

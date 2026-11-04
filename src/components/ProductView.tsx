@@ -138,7 +138,8 @@ export default function ProductView(props: Props) {
               src={current.src}
               alt={current.alt}
               fill
-              priority
+              preload
+              fetchPriority="high"
               sizes="(min-width: 1600px) 840px, (min-width: 1024px) 52vw, 100vw"
               className="object-contain"
             />

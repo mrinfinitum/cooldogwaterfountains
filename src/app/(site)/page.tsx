@@ -94,7 +94,8 @@ export default async function HomePage() {
           src={HERO_POSTER}
           alt=""
           fill
-          priority
+          preload
+          fetchPriority="high"
           sizes="100vw"
           className="-z-20 object-cover"
         />

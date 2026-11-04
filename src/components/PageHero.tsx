@@ -18,7 +18,7 @@ export default function PageHero({
     <section className="relative isolate overflow-hidden bg-gradient-to-br from-deep via-blue to-teal text-white">
       {image && (
         <>
-          <Image src={image} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
+          <Image src={image} alt="" fill preload fetchPriority="high" sizes="100vw" className="-z-20 object-cover" />
           <div className="absolute inset-0 -z-10 bg-gradient-to-tr from-ink/90 via-deep/70 to-teal/40" />
         </>
       )}
