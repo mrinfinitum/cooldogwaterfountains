@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import SaveButton from "./account/SaveButton";
+import { gaItem, track } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { swatchColor } from "@/lib/colors";
@@ -76,7 +77,7 @@ export default function ProductView(props: Props) {
 
   const router = useRouter();
   const onAddToCart = () => {
-    addToCart({
+    const item = {
       slug,
       color: variation?.color,
       sku: variation?.sku ?? sku,
@@ -84,7 +85,9 @@ export default function ProductView(props: Props) {
       name,
       price,
       image: (variation?.image ?? images[0])?.src,
-    });
+    };
+    addToCart(item);
+    track("add_to_cart", { currency: "USD", value: (price * quantity) / 100, items: [gaItem(item)] });
     router.push("/cart/");
   };
   const quoteHref = `/contact-us/?${new URLSearchParams({

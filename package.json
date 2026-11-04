@@ -10,6 +10,7 @@
     "photos": "node scripts/photos/build.mjs"
   },
   "dependencies": {
+    "@next/third-parties": "16.4.3",
     "@stripe/react-stripe-js": "^7.0.1",
     "@stripe/stripe-js": "^10.2.0",
     "next": "16.4.3",

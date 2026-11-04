@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import type { Address } from "@/lib/account";
 import { postAccount, useAccount } from "@/lib/account-client";
+import { gaItem, track } from "@/lib/analytics";
 import { clearCart, type CartItem } from "@/lib/cart";
 import { formatPrice, shippingFor } from "@/lib/format";
 import { CONTACT } from "@/lib/site";
@@ -108,6 +109,13 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok || !result.number) throw new Error(result.error || "Your order could not be placed.");
+      track("generate_lead", {
+        lead_type: "invoice_po",
+        transaction_id: result.number,
+        currency: "USD",
+        value: (subtotal + shippingFor(subtotal)) / 100,
+        items: items.map(gaItem),
+      });
       clearCart();
       if (customer && saveDetails) {
         await postAccount("profile", {

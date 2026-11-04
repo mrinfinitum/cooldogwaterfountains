@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, DM_Mono, Hanken_Grotesk } from "next/font/google";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -53,6 +54,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${display.variable} ${body.variable} ${label.variable} antialiased`}
     >
       <body className="flex min-h-dvh flex-col">{children}</body>
+      {/* Google Analytics 4, production only (loads after the page is interactive). */}
+      {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
     </html>
   );
 }

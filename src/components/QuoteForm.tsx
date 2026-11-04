@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CONTACT } from "@/lib/site";
+import { track } from "@/lib/analytics";
 
 const PROJECT_TYPES = [
   "Dog park",
@@ -38,6 +39,7 @@ export default function QuoteForm({ products }: { products: string[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Your request could not be sent.");
+      track("generate_lead", { lead_type: "quote", product: new FormData(form).get("product") || undefined });
       form.reset();
       setStatus("sent");
     } catch (e) {

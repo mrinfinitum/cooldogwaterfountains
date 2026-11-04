@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import ClearCart from "@/components/cart/ClearCart";
+import PurchaseEvent from "@/components/cart/PurchaseEvent";
 import { formatPrice } from "@/lib/format";
 import { CONTACT } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
@@ -18,7 +19,7 @@ async function OrderStatus({
   const id = typeof session_id === "string" ? session_id : "";
   const session = id.startsWith("cs_")
     ? await stripe()
-        .checkout.sessions.retrieve(id)
+        .checkout.sessions.retrieve(id, { expand: ["line_items"] })
         .catch(() => null)
     : null;
 
@@ -47,6 +48,17 @@ async function OrderStatus({
 
   return (
     <div className="max-w-2xl">
+      <PurchaseEvent
+        transactionId={session.id}
+        value={(session.amount_total ?? 0) / 100}
+        tax={(session.total_details?.amount_tax ?? 0) / 100}
+        shipping={(session.shipping_cost?.amount_total ?? 0) / 100}
+        items={(session.line_items?.data ?? []).map((line) => ({
+          item_name: line.description ?? "",
+          price: (line.price?.unit_amount ?? 0) / 100,
+          quantity: line.quantity ?? 1,
+        }))}
+      />
       <ClearCart />
       <p className="text-lg">
         Thank you{session.customer_details?.name ? `, ${session.customer_details.name}` : ""}! Your

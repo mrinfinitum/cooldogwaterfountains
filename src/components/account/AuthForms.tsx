@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { postAccount, refreshAccount } from "@/lib/account-client";
+import { track } from "@/lib/analytics";
 
 export const field =
   "mt-2 w-full border border-line bg-white px-4 py-3 text-[15px] outline-none transition focus:border-teal focus:ring-2 focus:ring-aqua/40";
@@ -101,6 +102,7 @@ export function RegisterForm() {
   const { busy, error, onSubmit } = useSubmit(async (data) => {
     if (data.get("password") !== data.get("confirm")) throw new Error("The passwords don't match.");
     await postAccount("register", Object.fromEntries(data));
+    track("sign_up", { method: "email" });
     await refreshAccount();
     router.push(next);
     router.refresh();
