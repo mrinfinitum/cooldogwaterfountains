@@ -18,6 +18,12 @@ export const shortName = (name: string) =>
 /** Product series from the SKU's last segment (e.g. DL-RNSE2-SST → SST). */
 export const seriesOf = (sku: string) => sku.match(/-(SST|SLV|STE)$/i)?.[1].toUpperCase();
 
+/** A file size for people (e.g. 2.4 MB). */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /** Shipping is charged as a share of the product subtotal. */
 export const SHIPPING_RATE = 0.12;
 export const shippingFor = (subtotalCents: number) => Math.round(subtotalCents * SHIPPING_RATE);

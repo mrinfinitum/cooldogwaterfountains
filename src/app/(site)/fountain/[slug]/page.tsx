@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ProductCard from "@/components/ProductCard";
-import { seriesOf } from "@/lib/format";
+import { seriesOf, formatBytes } from "@/lib/format";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
@@ -122,6 +122,21 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
               See all colors
             </Link>
           </Accordion>
+          {product.downloads.length > 0 && (
+            <Accordion title="Downloads" open>
+              <ul className="space-y-3 text-[15px]">
+                {product.downloads.map((d) => (
+                  <li key={d.url}>
+                    <a href={d.url} target="_blank" rel="noopener" className="group flex items-baseline gap-3">
+                      <span className="eyebrow shrink-0 bg-mist px-2 py-1 text-[10px]">{d.type || "File"}</span>
+                      <span className="link-underline group-hover:text-teal">{d.label}</span>
+                      {d.size ? <span className="text-sm text-muted">{formatBytes(d.size)}</span> : null}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Accordion>
+          )}
           <Accordion title="Installation & Specs">
             <ul className="space-y-2 text-[15px]">
               {RESOURCE_LINKS.filter((l) => !/colors/i.test(l.label)).map((l) => (

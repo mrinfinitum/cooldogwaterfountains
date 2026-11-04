@@ -48,9 +48,13 @@ export type Product = {
   categories: { slug: string; name: string; isSeries: boolean }[];
   colors: string[];
   options: ColorOption[];
+  /** Spec sheets, CAD drawings and guides uploaded in the CMS. */
+  downloads: Download[];
   taxCode: string;
   seo: Seo;
 };
+
+export type Download = { label: string; url: string; filename: string; type: string; size: number | null };
 
 export type Page = {
   id: string;
@@ -94,6 +98,7 @@ type RawProduct = {
     inStock: boolean;
     image: RawImage;
   }[];
+  downloads?: Download[];
   taxCode: string;
   order: number;
   seo: Seo;
@@ -149,6 +154,7 @@ function mapProduct(p: RawProduct): Product {
     categories: p.categories,
     colors: options.map((o) => o.color),
     options,
+    downloads: p.downloads ?? [],
     taxCode: p.taxCode,
     seo: p.seo,
   };
