@@ -85,6 +85,8 @@ export function plainText(html: string): string {
         : (ENTITIES[e.toLowerCase()] ?? m),
     )
     .replace(/\s+/g, " ")
+    // No space before punctuation ("basins , every" → "basins, every"), as the CMS tidies its fields (plugin 0.12.2).
+    .replace(/\s+([,.;:!?])/g, "$1")
     .trim();
 }
 
