@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
-/* Water palette: deep sea ink, blue, teal and aqua on a pale foam ground. */
+/* Palette from the 2026 logo: navy ink, logo blues and sky on a pale blue ground.
+   (The names come from the old teal palette; the values are now the logo blues.) */
 @theme {
-  --color-ink: #07222b;
-  --color-deep: #0a3550;
-  --color-blue: #11609a;
-  --color-teal: #0c7472; /* 4.5:1 or better on foam and white */
-  --color-teal-dark: #095b5a;
-  --color-aqua: #45c6c0;
-  --color-aqua-light: #a6e4e0;
-  --color-foam: #e4f1ef;
-  --color-mist: #f3f8f8;
-  --color-line: #cddfdd;
-  --color-muted: #4b6670;
+  --color-ink: #0b2447; /* dark navy: text and the footer */
+  --color-deep: #003078; /* the logo navy: hero, announcement bar, overlay headers */
+  --color-blue: #0058a8;
+  --color-teal: #006cb9; /* labels, links, eyebrows: 4.5:1 or better on foam and white */
+  --color-teal-dark: #00589a;
+  --color-aqua: #38bdf0; /* the logo sky, on dark backgrounds */
+  --color-aqua-light: #a8def5;
+  --color-foam: #dfeefa; /* light blue sections */
+  --color-mist: #f3f7fc;
+  --color-line: #d0dcea;
+  --color-muted: #4a5d75;
   /* The logo blue ("COOL DOG"), for buttons. White text on it is 4.5:1 or better. */
   --color-brand: #0077cc;
   --color-brand-dark: #005fa8;

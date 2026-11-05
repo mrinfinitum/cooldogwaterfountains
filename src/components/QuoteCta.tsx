@@ -10,7 +10,7 @@ export default function QuoteCta() {
           <h2 className="headline mt-3 text-5xl text-deep lg:text-6xl">
             Ready to plan your project?
           </h2>
-          <p className="mt-4 max-w-2xl text-ink/75">
+          <p className="mt-4 max-w-2xl text-ink">
             Most maintenance, engineering and construction staff can install our fountains.
             Installation and assembly is available in the USA — ask us for a quote or an installer
             in your area.
