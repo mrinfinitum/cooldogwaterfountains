@@ -11,7 +11,7 @@ import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
 import { SITE_NAME, canonicalUrl } from "@/lib/site";
 import PlanningList from "@/components/sheets/PlanningList";
-import { firstParagraph, highlights, productFacts, productMetadata } from "@/lib/seo";
+import { productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
 
 export async function generateStaticParams() {
@@ -36,7 +36,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   const all = await getProducts();
   const related = all.filter((p) => p.id !== product.id).slice(0, 4);
   const series = seriesOf(product.sku);
-  const facts = productFacts(product.descriptionHtml);
+  const facts = product.page;
 
   // Structured data for search engines.
   const jsonLd = {
@@ -83,8 +83,8 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
         slug={product.slug}
         sku={product.sku}
         series={series}
-        lead={firstParagraph(product.descriptionHtml)}
-        highlights={highlights(product.descriptionHtml, 4, product.colors)}
+        lead={product.page.summary}
+        highlights={product.page.highlights}
         price={product.price}
         regularPrice={product.regularPrice}
         priceLabel={product.priceLabel}
@@ -139,7 +139,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
                 )}
                 <div className="flex justify-between gap-4 py-2.5">
                   <dt className="text-muted">Made in</dt>
-                  <dd className="font-medium">USA</dd>
+                  <dd className="font-medium">{facts.madeIn}</dd>
                 </div>
               </dl>
               {facts.soldSeparately && (

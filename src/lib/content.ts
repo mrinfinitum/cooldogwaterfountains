@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { cms } from "./cms";
+import { firstParagraph, highlights, productFacts } from "./seo";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -50,8 +51,23 @@ export type Product = {
   options: ColorOption[];
   /** Spec sheets, CAD drawings and guides uploaded in the CMS. */
   downloads: Download[];
+  /** What the product page shows beside the gallery and in "At a glance". */
+  page: ProductPage;
   taxCode: string;
   seo: Seo;
+};
+
+/**
+ * The product page's summary, highlights and key facts: from the CMS
+ * "Product page" box, or (for any field left empty) read from the main
+ * description as before.
+ */
+export type ProductPage = {
+  summary?: string;
+  highlights: string[];
+  warranty?: string;
+  soldSeparately?: string;
+  madeIn: string;
 };
 
 export type Download = { label: string; url: string; filename: string; type: string; size: number | null };
@@ -99,6 +115,14 @@ type RawProduct = {
     image: RawImage;
   }[];
   downloads?: Download[];
+  /** The CMS "Product page" box (plugin 0.11+); missing on older plugins. */
+  page?: {
+    summary?: string;
+    highlights?: string[];
+    warranty?: string;
+    soldSeparately?: string;
+    madeIn?: string;
+  };
   taxCode: string;
   order: number;
   seo: Seo;
@@ -155,8 +179,24 @@ function mapProduct(p: RawProduct): Product {
     colors: options.map((o) => o.color),
     options,
     downloads: p.downloads ?? [],
+    page: productPage(p, options.map((o) => o.color)),
     taxCode: p.taxCode,
     seo: p.seo,
+  };
+}
+
+/** Each CMS "Product page" field, or what the main description gives when it's empty. */
+function productPage(p: RawProduct, colors: string[]): ProductPage {
+  const cms = p.page ?? {};
+  const text = (value?: string) => value?.trim() || undefined;
+  const listed = (cms.highlights ?? []).map((h) => h.trim()).filter(Boolean);
+  const facts = productFacts(p.descriptionHtml);
+  return {
+    summary: text(cms.summary) ?? firstParagraph(p.descriptionHtml),
+    highlights: listed.length ? listed.slice(0, 4) : highlights(p.descriptionHtml, 4, colors),
+    warranty: text(cms.warranty) ?? facts.warranty,
+    soldSeparately: text(cms.soldSeparately) ?? facts.soldSeparately,
+    madeIn: text(cms.madeIn) ?? "USA",
   };
 }
 
