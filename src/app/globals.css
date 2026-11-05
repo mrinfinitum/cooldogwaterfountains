@@ -13,10 +13,9 @@
   --color-mist: #f3f8f8;
   --color-line: #cddfdd;
   --color-muted: #4b6670;
-  /* The logo blues: "COOL DOG" runs from sky to bright blue. Used for buttons. */
-  --color-sky: #00a6e6;
-  --color-brand: #0070c8; /* white text 5:1 */
-  --color-brand-dark: #005aa3;
+  /* The logo blue ("COOL DOG"), for buttons. White text on it is 4.5:1 or better. */
+  --color-brand: #0077cc;
+  --color-brand-dark: #005fa8;
 }
 
 @theme inline {
@@ -71,7 +70,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     border: 1px solid transparent;
-    border-radius: 999px;
     transition:
       background-color 150ms,
       color 150ms,
@@ -81,45 +79,12 @@ body {
 }
 
 @layer components {
-  /* The logo blue: a bright gradient with a soft glow that lifts on hover. */
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-brand) 0%, #0088d8 55%, var(--color-sky) 100%);
+    background: var(--color-brand);
     color: #fff;
-    font-weight: 600;
-    box-shadow:
-      0 6px 18px -6px rgb(0 136 216 / 0.6),
-      inset 0 1px 0 rgb(255 255 255 / 0.25);
-    transition:
-      transform 150ms,
-      box-shadow 150ms,
-      filter 150ms;
   }
   .btn-primary:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.08);
-    box-shadow:
-      0 10px 24px -8px rgb(0 166 230 / 0.75),
-      inset 0 1px 0 rgb(255 255 255 / 0.3);
-  }
-  .btn-primary:active {
-    transform: translateY(0);
-    filter: brightness(0.96);
-  }
-  .btn-primary:focus-visible {
-    outline: 2px solid var(--color-sky);
-    outline-offset: 3px;
-  }
-  .btn-primary:disabled {
-    cursor: not-allowed;
-    filter: saturate(0.5);
-    transform: none;
-    box-shadow: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .btn-primary,
-    .btn-primary:hover {
-      transform: none;
-    }
+    background: var(--color-brand-dark);
   }
   .btn-light {
     background: #fff;
