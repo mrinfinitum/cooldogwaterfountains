@@ -6,6 +6,18 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.cooldogwaterfountains.com"
 ).replace(/\/$/, "");
 
+/**
+ * The one address search engines should index: https, www, trailing slash
+ * (apex and http redirect here at Vercel). Canonical tags, og:url, the sitemap,
+ * robots.txt, structured data and llms.txt always use it, even on previews and
+ * locally, so every copy of a page points at the production URL. SITE_URL stays
+ * the address of the environment you're on (emails, Stripe return links).
+ */
+export const CANONICAL_URL = "https://www.cooldogwaterfountains.com";
+
+/** The canonical absolute URL for a site path ("/shop/" → "https://www…/shop/"). */
+export const canonicalUrl = (path: string) => `${CANONICAL_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
 export const SITE_NAME = "Cool Dog Water Fountains";
 
 export const CONTACT = {

@@ -9,7 +9,7 @@ import ProductDownloads from "@/components/ProductDownloads";
 import ProductView from "@/components/ProductView";
 import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME, canonicalUrl } from "@/lib/site";
 import PlanningList from "@/components/sheets/PlanningList";
 import { firstParagraph, highlights, productFacts, productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
@@ -42,6 +42,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
+    url: canonicalUrl(`/fountain/${product.slug}/`),
     name: product.name,
     sku: product.sku,
     image: product.images.map((i) => i.src),
@@ -49,6 +50,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
     brand: { "@type": "Brand", name: SITE_NAME },
     offers: {
       "@type": "Offer",
+      url: canonicalUrl(`/fountain/${product.slug}/`),
       priceCurrency: "USD",
       price: (product.price / 100).toFixed(2),
       availability: product.inStock

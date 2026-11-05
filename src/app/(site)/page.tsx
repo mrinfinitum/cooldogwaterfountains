@@ -11,7 +11,7 @@ import {
   ShieldIcon,
   Wave,
 } from "@/components/icons";
-import { CONTACT, HERO_POSTER, HERO_VIDEO, LOGO, SITE_NAME, SITE_URL, media } from "@/lib/site";
+import { CONTACT, HERO_POSTER, HERO_VIDEO, LOGO, SITE_NAME, CANONICAL_URL, media } from "@/lib/site";
 import { getProducts } from "@/lib/content";
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
@@ -72,13 +72,13 @@ export default async function HomePage() {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: SITE_NAME,
-      url: `${SITE_URL}/`,
-      logo: `${SITE_URL}${LOGO.src}`,
+      url: `${CANONICAL_URL}/`,
+      logo: `${CANONICAL_URL}${LOGO.src}`,
       telephone: `+1-${CONTACT.phone.replace(/\./g, "-")}`,
       email: CONTACT.email,
       parentOrganization: { "@type": "Organization", name: "The Dog Park Company" },
     },
-    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: `${SITE_URL}/` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: `${CANONICAL_URL}/` },
   ];
 
   return (

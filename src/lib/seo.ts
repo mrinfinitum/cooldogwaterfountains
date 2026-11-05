@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { formatPrice } from "./format";
-import { SITE_NAME, SITE_URL } from "./site";
+import { SITE_NAME, SITE_URL, canonicalUrl } from "./site";
 import type { Page, Product } from "./content";
 import { shortName } from "./format";
 
@@ -53,14 +53,16 @@ export function buildMetadata({
   const t = fitTitle(title);
   const d = fitDescription(description);
   const images = image ? [{ url: absolute(image) }] : undefined;
+  const url = canonicalUrl(path);
   return {
     title: { absolute: t },
     description: d,
-    alternates: { canonical: path },
+    // A noindex page gets no canonical: the two would send search engines mixed signals.
+    ...(noindex ? {} : { alternates: { canonical: url } }),
     openGraph: {
       title: t,
       description: d,
-      url: path,
+      url,
       siteName: SITE_NAME,
       locale: "en_US",
       type,

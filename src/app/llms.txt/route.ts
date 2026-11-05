@@ -2,7 +2,7 @@ import { SHEETS } from "@/lib/sheets";
 import { getPages, getProducts } from "@/lib/content";
 import { formatPrice } from "@/lib/format";
 import { pageMetadata, productMetadata } from "@/lib/seo";
-import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
+import { CONTACT, SITE_NAME, canonicalUrl } from "@/lib/site";
 
 /**
  * /llms.txt — a plain-language map of the site for AI assistants
@@ -13,7 +13,7 @@ export async function GET() {
 
   const text = (value: unknown) => String(value ?? "");
   const link = (label: string, path: string, note?: string) =>
-    `- [${label}](${SITE_URL}${path})${note ? `: ${note}` : ""}`;
+    `- [${label}](${canonicalUrl(path)})${note ? `: ${note}` : ""}`;
 
   const productLines = products.map((p) => {
     const meta = productMetadata(p);
@@ -48,7 +48,7 @@ export async function GET() {
     "- Color Play® program: standard colors plus custom colors.",
     "- Installation and assembly available across the USA; most maintenance or construction staff can install the fountains.",
     `- Sales and quotes: ${CONTACT.phone} · ${CONTACT.email} · ${CONTACT.hours}, ${CONTACT.days}.`,
-    `- Online ordering: card checkout on the site (Stripe), with sales tax calculated at checkout and shipping at 12% of the order. Volume and project quotes: ${SITE_URL}/contact-us/`,
+    `- Online ordering: card checkout on the site (Stripe), with sales tax calculated at checkout and shipping at 12% of the order. Volume and project quotes: ${canonicalUrl("/contact-us/")}`,
     "",
     "## Products",
     "",
