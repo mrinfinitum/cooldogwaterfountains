@@ -153,13 +153,13 @@ export default function ProductView(props: Props) {
           <p className="eyebrow text-muted">
             {series ? `${series} Series · ` : ""}SKU {variation?.sku ?? sku}
           </p>
-          <h1 className="headline mt-3 text-4xl text-deep sm:text-5xl">{name}</h1>
+          <h1 className="headline mt-3 text-4xl text-ink sm:text-5xl">{name}</h1>
 
           <div className="mt-5">
             <Price price={price} regularPrice={regularPrice} label={props.priceLabel} size="lg" />
           </div>
 
-          {lead && <p className="mt-5 leading-relaxed text-ink/75">{lead}</p>}
+          {lead && <p className="mt-5 leading-relaxed text-body">{lead}</p>}
 
           {highlights.length > 0 && (
             <ul className="mt-5 grid gap-2 text-[15px]">
@@ -239,7 +239,7 @@ export default function ProductView(props: Props) {
             <SaveButton slug={slug} />
           </div>
 
-          <ul className="mt-7 grid grid-cols-3 gap-3 border-t border-line pt-6 text-center text-xs leading-snug text-ink/75">
+          <ul className="mt-7 grid grid-cols-3 gap-3 border-t border-line pt-6 text-center text-xs leading-snug text-muted">
             <li className="flex flex-col items-center gap-2">
               <FlagIcon className="text-teal" /> Made in the USA
             </li>

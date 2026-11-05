@@ -14,7 +14,7 @@ export default function ProfilePage() {
         ← My account
       </Link>
       <h1 className="headline mt-6 text-6xl">Account details</h1>
-      <p className="mt-3 text-[15px] text-ink/75">
+      <p className="mt-3 text-[15px] text-body">
         Used to fill in checkout on every The Dog Park Company store.
       </p>
       <div className="mt-10">

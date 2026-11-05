@@ -35,7 +35,7 @@ async function Dashboard() {
         </h1>
         <SignOutButton />
       </div>
-      <p className="mt-3 text-[15px] text-ink/75">
+      <p className="mt-3 text-[15px] text-body">
         Your account works on every The Dog Park Company store; orders from each are listed here.
       </p>
 
@@ -75,7 +75,7 @@ async function Dashboard() {
               ))}
             </ul>
           ) : (
-            <p className="mt-6 text-[15px] text-ink/75">
+            <p className="mt-6 text-[15px] text-body">
               No orders yet.{" "}
               <Link href="/shop/" className="link-underline">
                 Shop fountains
@@ -118,7 +118,7 @@ async function Dashboard() {
               })}
             </ul>
           ) : (
-            <p className="mt-6 text-[15px] text-ink/75">
+            <p className="mt-6 text-[15px] text-body">
               Tap <strong>Save</strong> on any fountain to keep it here.
             </p>
           )}

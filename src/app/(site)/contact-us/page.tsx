@@ -76,10 +76,10 @@ export default async function ContactPage() {
         </aside>
 
         <section className="lg:col-span-8" aria-labelledby="quote-heading">
-          <h2 id="quote-heading" className="headline text-5xl text-deep lg:text-7xl">
+          <h2 id="quote-heading" className="headline text-5xl text-ink lg:text-7xl">
             Build a quote
           </h2>
-          <p className="mb-10 mt-4 max-w-2xl text-ink/75">
+          <p className="mb-10 mt-4 max-w-2xl text-body">
             All of our products are made for easy installation, and installation and assembly is
             available across the USA. Ask about an installer in your area.
           </p>

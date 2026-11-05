@@ -176,15 +176,15 @@ export default async function HomePage() {
         <div className="flex items-center px-6 py-16 sm:px-12 lg:px-20">
           <div className="max-w-xl">
             <p className="eyebrow text-teal">Parks · Apartments · HOAs · Vet Clinics</p>
-            <h2 className="headline mt-4 text-6xl text-deep lg:text-7xl">
+            <h2 className="headline mt-4 text-6xl text-ink lg:text-7xl">
               Quality water fountains for dogs
             </h2>
-            <p className="mt-6 text-lg leading-relaxed text-ink/80">
+            <p className="mt-6 text-lg leading-relaxed text-body">
               Our Architectural Series dog water fountains are built for apartments, public parks,
               dog parks, city parks, veterinary clinics, doggie daycare centers, animal parks and
               HOAs.
             </p>
-            <p className="mt-4 leading-relaxed text-ink/70">
+            <p className="mt-4 leading-relaxed text-muted">
               Available in several colors, a high-quality pet drinking fountain is a welcome amenity
               that makes any dog park a great place for dogs to play.
             </p>

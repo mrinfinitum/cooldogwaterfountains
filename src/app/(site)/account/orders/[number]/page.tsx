@@ -57,7 +57,7 @@ async function OrderDetails({ params }: Pick<PageProps<"/account/orders/[number]
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="headline text-6xl">Order #{order.number}</h1>
-          <p className="mt-2 text-[15px] text-ink/75">
+          <p className="mt-2 text-[15px] text-body">
             Placed {formatDate(order.date)}
             {otherStore ? ` on ${otherStore.name}` : ""} · {order.paymentMethod}
             {order.poNumber ? ` · PO ${order.poNumber}` : ""}

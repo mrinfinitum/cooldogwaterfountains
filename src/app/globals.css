@@ -13,7 +13,8 @@
   --color-foam: #dfeefa; /* light blue sections */
   --color-mist: #f3f7fc;
   --color-line: #d0dcea;
-  --color-muted: #4a5d75;
+  --color-body: #2b3645; /* copy: dark blue-grey, softer than navy, never black (12:1 on white) */
+  --color-muted: #4a5d75; /* secondary copy: captions, help text, meta */
   /* The logo blue ("COOL DOG"), for buttons. White text on it is 4.5:1 or better. */
   --color-brand: #0077cc;
   --color-brand-dark: #005fa8;
@@ -29,11 +30,35 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ---- Type system ---------------------------------------------------
+   Headings: navy (ink), Barlow Condensed. Copy: blue-grey (body), Hanken
+   Grotesk, 1.7 line height. Secondary copy: muted. Bold: navy, 600.
+   On dark sections (text-white) everything inherits white instead. */
 body {
   background: #fff;
-  color: var(--color-ink);
+  color: var(--color-body);
   font-family: var(--font-sans);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  :where(h1, h2, h3, h4, h5, h6, legend, .headline) {
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  strong,
+  b {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  :where(p, li, dd) {
+    text-wrap: pretty;
+  }
+  /* Dark sections set text-white; their headings and bold text follow it. */
+  :where(.text-white) :where(h1, h2, h3, h4, h5, h6, legend, .headline, strong, b) {
+    color: inherit;
+  }
 }
 
 ::selection {
@@ -139,10 +164,11 @@ body {
   margin: 0;
 }
 
+/* CMS copy: the same size, colour and rhythm on every page. */
 .wp-content {
   font-size: 1.0625rem;
   line-height: 1.7;
-  color: var(--color-ink);
+  color: var(--color-body);
 }
 .wp-content > * + *,
 .wp-content div > * + * {
@@ -155,7 +181,21 @@ body {
   text-transform: uppercase;
   line-height: 0.95;
   margin-top: 1.8em;
-  color: var(--color-deep);
+  color: var(--color-ink);
+}
+/* A heading sits closer to the copy it introduces than to the copy above it. */
+.wp-content :is(h2, h3, h4, h5, h6) + * {
+  margin-top: 0.6em;
+}
+/* A paragraph that is only bold text ("Fresh Flow, Built to Stay") is a subheading. */
+.wp-content p:has(> strong:only-child) {
+  margin-top: 1.6em;
+}
+.wp-content p:has(> strong:only-child) + * {
+  margin-top: 0.4em;
+}
+.wp-content > p:first-child:has(> strong:only-child) {
+  margin-top: 0;
 }
 .wp-content h2 {
   font-size: clamp(2rem, 4vw, 3rem);

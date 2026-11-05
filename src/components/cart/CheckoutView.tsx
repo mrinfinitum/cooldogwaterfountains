@@ -37,7 +37,7 @@ export default function CheckoutView() {
   if (!items.length) {
     return (
       <div className="py-10">
-        <p className="text-lg text-ink/75">Your cart is empty.</p>
+        <p className="text-lg text-body">Your cart is empty.</p>
         <Link href="/shop/" className="btn btn-primary mt-6">
           Shop Fountains
         </Link>

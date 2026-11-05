@@ -101,7 +101,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
           <p className="eyebrow text-teal">Details &amp; features</p>
           <h2 className="headline mt-3 text-4xl lg:text-5xl">{shortName(product.name)}</h2>
           {/* What the summary, highlights and At a glance already show is left out here. */}
-          <RichText html={withoutRepeats(product.descriptionHtml, product.page)} className="mt-8 max-w-[68ch] text-[16px] leading-relaxed" />
+          <RichText html={withoutRepeats(product.descriptionHtml, product.page)} className="mt-8 max-w-[68ch]" />
         </div>
 
         <aside className="lg:col-span-5">
@@ -146,7 +146,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
                 </div>
               </dl>
               {facts.soldSeparately && (
-                <p className="mt-4 text-sm leading-relaxed text-ink/75">
+                <p className="mt-4 text-sm leading-relaxed text-body">
                   <span className="font-semibold text-ink">Sold separately: </span>
                   {facts.soldSeparately}
                 </p>

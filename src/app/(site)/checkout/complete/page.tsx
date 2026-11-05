@@ -66,9 +66,9 @@ async function OrderStatus({
         <strong>{session.customer_details?.email}</strong>.
       </p>
       {session.amount_total != null && (
-        <p className="mt-4 text-ink/75">Order total: {formatPrice(session.amount_total)}</p>
+        <p className="mt-4 text-body">Order total: {formatPrice(session.amount_total)}</p>
       )}
-      <p className="mt-4 text-ink/75">
+      <p className="mt-4 text-body">
         Our team will be in touch about delivery. Questions? Call {CONTACT.phone} or email{" "}
         {CONTACT.email}.
       </p>

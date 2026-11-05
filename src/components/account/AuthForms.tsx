@@ -86,7 +86,7 @@ export function LoginForm() {
           Forgot your password?
         </Link>
       </div>
-      <p className="text-[15px] text-ink/75">
+      <p className="text-[15px] text-body">
         New here?{" "}
         <Link href={`/account/register/?next=${encodeURIComponent(next)}`} className="link-underline">
           Create an account
@@ -152,7 +152,7 @@ export function RegisterForm() {
         </button>
         <p className="text-sm text-muted">One account for every The Dog Park Company store.</p>
       </div>
-      <p className="text-[15px] text-ink/75">
+      <p className="text-[15px] text-body">
         Already have an account?{" "}
         <Link href={`/account/login/?next=${encodeURIComponent(next)}`} className="link-underline">
           Sign in

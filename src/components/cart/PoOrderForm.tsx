@@ -137,7 +137,7 @@ export default function PoOrderForm({ items }: { items: CartItem[] }) {
       <div role="status" className="bg-foam p-8">
         <p className="eyebrow text-teal">Order received</p>
         <h2 className="headline mt-3 text-5xl">Order #{placed.number}</h2>
-        <p className="mt-4 text-[15px] text-ink/80">
+        <p className="mt-4 text-[15px] text-body">
           Thank you. A confirmation is on its way to {placed.email}, and our sales team will email
           your invoice, usually within one business day. Questions? Call{" "}
           <a className="link-underline" href={CONTACT.phoneHref}>
