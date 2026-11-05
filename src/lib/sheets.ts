@@ -41,6 +41,16 @@ export const SHEETS: Sheet[] = [
 
 export const sheetByKey = (key: string) => SHEETS.find((s) => s.key === key);
 
+/**
+ * True when a product's CMS Downloads include this sheet's PDF (uploaded to the
+ * Media Library under the same name, e.g. cool-dog-installation-guide.pdf;
+ * WordPress may add "-1" etc.).
+ */
+export function isAttached(sheet: Sheet, downloads: { filename: string }[]) {
+  const base = sheet.pdf.split("/").pop()!.replace(/\.pdf$/i, "");
+  return downloads.some((d) => new RegExp(`^${base}(-\\d+)?\\.pdf$`, "i").test(d.filename));
+}
+
 /** Opens a sheet in the overlay (SheetHost, mounted once in SiteChrome). */
 export function openSheet(key: SheetKey) {
   window.dispatchEvent(new CustomEvent("cd:open-sheet", { detail: key }));

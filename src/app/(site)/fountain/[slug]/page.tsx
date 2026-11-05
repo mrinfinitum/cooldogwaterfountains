@@ -11,6 +11,7 @@ import QuoteCta from "@/components/QuoteCta";
 import RichText from "@/components/RichText";
 import { SITE_NAME, canonicalUrl } from "@/lib/site";
 import PlanningList from "@/components/sheets/PlanningList";
+import { SHEETS, isAttached } from "@/lib/sheets";
 import { productMetadata } from "@/lib/seo";
 import { getProduct, getProducts } from "@/lib/content";
 
@@ -37,6 +38,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
   const related = all.filter((p) => p.id !== product.id).slice(0, 4);
   const series = seriesOf(product.sku);
   const facts = product.page;
+  const sheetsNotAttached = SHEETS.filter((s) => !isAttached(s, product.downloads));
 
   // Structured data for search engines.
   const jsonLd = {
@@ -150,17 +152,17 @@ async function ProductDetails({ params }: Pick<PageProps<"/fountain/[slug]">, "p
               )}
             </div>
 
-            {product.downloads.length > 0 && (
-              // Files attached to the product in the CMS (Downloads box).
-              <div>
-                <h2 className="eyebrow">Downloads</h2>
-                <ProductDownloads downloads={product.downloads} />
-              </div>
-            )}
-
             <div>
               <h2 className="eyebrow">Planning &amp; installation</h2>
-              <PlanningList />
+              {/* The files attached to this product in the CMS (Downloads box), with their labels. */}
+              {product.downloads.length > 0 && <ProductDownloads downloads={product.downloads} />}
+              {/* Site-wide planning sheets this product doesn't have attached yet. */}
+              {sheetsNotAttached.length > 0 && (
+                // Right under the downloads it continues the same list (no second gap or border).
+                <div className={product.downloads.length > 0 ? "[&>ul]:mt-0 [&>ul]:border-t-0" : undefined}>
+                  <PlanningList sheets={sheetsNotAttached} />
+                </div>
+              )}
             </div>
           </div>
         </aside>

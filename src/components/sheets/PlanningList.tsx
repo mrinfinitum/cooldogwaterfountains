@@ -1,7 +1,7 @@
 "use client";
 
 import { track } from "@/lib/analytics";
-import { SHEETS, openSheet, type SheetKey } from "@/lib/sheets";
+import { SHEETS, openSheet, type Sheet, type SheetKey } from "@/lib/sheets";
 import { DownloadIcon, PaletteIcon, PipeIcon, WrenchIcon } from "../icons";
 
 const ICONS: Record<SheetKey, typeof WrenchIcon> = {
@@ -14,10 +14,10 @@ const ICONS: Record<SheetKey, typeof WrenchIcon> = {
  * Planning sheets as rows: the row opens the sheet over the page; the icon
  * downloads its PDF straight away.
  */
-export default function PlanningList() {
+export default function PlanningList({ sheets = SHEETS }: { sheets?: Sheet[] }) {
   return (
     <ul className="mt-4 divide-y divide-line border-y border-line">
-      {SHEETS.map((s) => {
+      {sheets.map((s) => {
         const Icon = ICONS[s.key];
         return (
           <li key={s.key} className="flex items-center">
