@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { RemoveSavedButton, SignOutButton } from "@/components/account/AccountActions";
+import { RemoveSavedButton, ResendVerifyButton, SignOutButton } from "@/components/account/AccountActions";
 import { AddressBlock, StatusBadge } from "@/components/account/OrderBits";
 import { formatDate, getCustomer, getOrders, getSaved } from "@/lib/account";
 import { formatPrice, shortName } from "@/lib/format";
@@ -42,7 +42,15 @@ async function Dashboard() {
       <div className="mt-12 grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <h2 className="headline text-4xl">Orders</h2>
-          {orders.length ? (
+          {!customer.emailVerified ? (
+            <div className="mt-6 bg-foam p-6 text-[15px]">
+              <p>
+                To show your orders, please confirm that <strong>{customer.email}</strong> is your email. We sent
+                you a link when you signed up.
+              </p>
+              <ResendVerifyButton />
+            </div>
+          ) : orders.length ? (
             <ul className="mt-6 divide-y divide-line border-y border-line">
               {orders.map((o) => (
                 <li key={o.id}>

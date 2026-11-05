@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { postAccount, refreshAccount } from "@/lib/account-client";
 import { track } from "@/lib/analytics";
 
@@ -231,5 +231,44 @@ export function ResetForm() {
         {busy ? "Saving…" : "Set New Password"}
       </button>
     </Form>
+  );
+}
+
+/** Confirms the account's email from the emailed link (/account/verify/?login=…&key=…). */
+export function VerifyEmail() {
+  const params = useSearchParams();
+  const login = params.get("login");
+  const key = params.get("key");
+  const [state, setState] = useState<{ status: "working" | "done" | "failed"; message?: string }>({
+    status: login && key ? "working" : "failed",
+    message: login && key ? undefined : "This confirmation link is incomplete.",
+  });
+  useEffect(() => {
+    if (!login || !key) return;
+    postAccount("verify", { login, key })
+      .then(() => setState({ status: "done" }))
+      .catch((e) => setState({ status: "failed", message: e instanceof Error ? e.message : undefined }));
+  }, [login, key]);
+
+  if (state.status === "working") return <div className="h-24 animate-pulse bg-mist" />;
+  if (state.status === "done") {
+    return (
+      <p className="bg-foam p-6 text-[15px]">
+        Thanks, your email is confirmed. Your orders now show in{" "}
+        <Link href="/account/" className="link-underline">
+          My Account
+        </Link>
+        .
+      </p>
+    );
+  }
+  return (
+    <p role="alert" className="bg-foam p-6 text-[15px]">
+      {state.message || "This confirmation link didn't work."}{" "}
+      <Link href="/account/" className="link-underline">
+        Sign in to get a new one
+      </Link>
+      .
+    </p>
   );
 }

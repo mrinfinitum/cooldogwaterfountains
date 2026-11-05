@@ -12,16 +12,27 @@ export class CmsError extends Error {
 }
 
 /**
+ * Who a customer-account request is for: the signed-in customer's token (the
+ * CMS only opens an account with it) and the shopper's IP (for throttling).
+ */
+export type CmsCaller = { token?: string; clientIp?: string };
+
+/**
  * Headless Commerce CMS (WordPress + WooCommerce) storefront API.
  * Needs CMS_URL (the CMS address) and CMS_API_KEY (this storefront's key).
  */
-export async function cms<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function cms<T>(path: string, init: RequestInit = {}, caller: CmsCaller = {}): Promise<T> {
   const base = process.env.CMS_URL?.replace(/\/$/, "");
   const key = process.env.CMS_API_KEY;
   if (!base || !key) throw new Error("CMS_URL and CMS_API_KEY must be set.");
   const res = await fetch(`${base}/wp-json/headless/v1/${path}`, {
     ...init,
-    headers: { ...init.headers, authorization: `Bearer ${key}` },
+    headers: {
+      ...init.headers,
+      authorization: `Bearer ${key}`,
+      ...(caller.token ? { "x-customer-token": caller.token } : {}),
+      ...(caller.clientIp ? { "x-client-ip": caller.clientIp } : {}),
+    },
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -41,9 +52,13 @@ export async function cms<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 /** POST a JSON body to the CMS. */
-export const cmsPost = <T>(path: string, body: unknown) =>
-  cms<T>(path, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+export const cmsPost = <T>(path: string, body: unknown, caller: CmsCaller = {}) =>
+  cms<T>(
+    path,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    },
+    caller,
+  );

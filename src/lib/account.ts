@@ -27,7 +27,12 @@ export type Customer = {
   phone: string;
   billing: Address;
   shipping: Address;
+  /** Past orders (matched by email) only show once the customer has confirmed the email is theirs. */
+  emailVerified: boolean;
 };
+
+/** What the CMS returns when it signs a customer in: the profile plus a token for this session. */
+export type SignedIn = Customer & { token: string };
 
 type Image = { src: string; alt: string; width?: number; height?: number } | null;
 type Storefront = { slug: string; name: string; url: string } | null;
@@ -77,17 +82,17 @@ export type SavedProduct = {
 export async function getCustomer(): Promise<Customer | null> {
   const session = await getSession();
   if (!session) return null;
-  return cms<Customer>(`customers/${session.id}`).catch(() => null);
+  return cms<Customer>(`customers/${session.id}`, {}, { token: session.token }).catch(() => null);
 }
 
 export async function getOrders(): Promise<Order[]> {
   const session = await getSession();
-  return session ? cms<Order[]>(`customers/${session.id}/orders`) : [];
+  return session ? cms<Order[]>(`customers/${session.id}/orders`, {}, { token: session.token }) : [];
 }
 
 export async function getSaved(): Promise<SavedProduct[]> {
   const session = await getSession();
-  return session ? cms<SavedProduct[]>(`customers/${session.id}/saved`) : [];
+  return session ? cms<SavedProduct[]>(`customers/${session.id}/saved`, {}, { token: session.token }) : [];
 }
 
 /** True when an address has the fields an order needs. */

@@ -1,4 +1,4 @@
-import { errorResponse, readJson, str } from "@/lib/account-api";
+import { clientIp, errorResponse, readJson, str } from "@/lib/account-api";
 import { cmsPost } from "@/lib/cms";
 import { sendEmail } from "@/lib/email";
 import { CONTACT, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const reset = await cmsPost<{ exists: boolean; login?: string; key?: string; firstName?: string }>(
       "customers/password-reset",
       { email },
+      { clientIp: await clientIp() },
     );
     if (reset.exists && reset.login && reset.key) {
       const link = `${SITE_URL}/account/reset/?${new URLSearchParams({ login: reset.login, key: reset.key })}`;
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
         text: [
           `Hi${reset.firstName ? ` ${reset.firstName}` : ""},`,
           "",
-          "Use this link to choose a new password (it works once and expires in 24 hours):",
+          "Use this link to choose a new password (it works once and expires in 1 hour):",
           link,
           "",
           "Your account is shared by all The Dog Park Company stores, so the new password works on each of them.",

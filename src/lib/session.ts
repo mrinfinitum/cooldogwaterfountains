@@ -5,10 +5,12 @@ import { connection } from "next/server";
 
 /**
  * The signed-in customer, kept in a signed, HTTP-only cookie. The account
- * itself lives in the CMS (shared by every storefront); the cookie only says
- * which CMS customer this browser signed in as, and until when.
+ * itself lives in the CMS (shared by every storefront); the cookie says which
+ * CMS customer this browser signed in as, until when, and holds the CMS's
+ * customer token, without which the CMS won't open the account. (Changing the
+ * password anywhere makes the CMS refuse old tokens, which signs this out.)
  */
-export type Session = { id: number; email: string; name: string; exp: number };
+export type Session = { id: number; email: string; name: string; token: string; exp: number };
 
 const COOKIE = "cd_session";
 /** Readable by the browser; only says "someone is signed in here", so pages skip the account fetch otherwise. */
@@ -31,7 +33,10 @@ function verify(token: string): Session | null {
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
   try {
     const session = JSON.parse(Buffer.from(payload, "base64url").toString()) as Session;
-    return Number.isInteger(session.id) && session.exp > Date.now() / 1000 ? session : null;
+    // Sessions from before customer tokens have none, and the CMS now refuses them: sign in again.
+    return Number.isInteger(session.id) && typeof session.token === "string" && session.exp > Date.now() / 1000
+      ? session
+      : null;
   } catch {
     return null;
   }
@@ -46,11 +51,12 @@ export async function getSession(): Promise<Session | null> {
 }
 
 /** Signs the customer in on this browser (call from a Route Handler). */
-export async function startSession(customer: { id: number; email: string; firstName?: string }) {
+export async function startSession(customer: { id: number; email: string; firstName?: string; token?: string }) {
   const session: Session = {
     id: customer.id,
     email: customer.email,
     name: customer.firstName ?? "",
+    token: customer.token ?? "",
     exp: Math.floor(Date.now() / 1000) + MAX_AGE,
   };
   const payload = Buffer.from(JSON.stringify(session)).toString("base64url");

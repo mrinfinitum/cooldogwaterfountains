@@ -1,6 +1,34 @@
 import "server-only";
+import { headers } from "next/headers";
 import { CmsError } from "./cms";
+import { sendEmail } from "./email";
 import { getSession, type Session } from "./session";
+import { CONTACT, SITE_NAME, SITE_URL } from "./site";
+
+/** The shopper's IP (Vercel sets x-forwarded-for), which the CMS uses to throttle sign-in attempts. */
+export async function clientIp() {
+  return (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+}
+
+/** Emails the link that confirms a new account's email (so its past orders can be shown). */
+export async function sendVerifyEmail(email: string, firstName: string, verify: { login: string; key: string }) {
+  const link = `${SITE_URL}/account/verify/?${new URLSearchParams(verify)}`;
+  await sendEmail({
+    to: [email],
+    replyTo: CONTACT.email,
+    subject: `Confirm your email for ${SITE_NAME}`,
+    text: [
+      `Hi${firstName ? ` ${firstName}` : ""},`,
+      "",
+      "Please confirm this is your email address, so we can show your orders in My Account:",
+      link,
+      "",
+      "The link works for 7 days. If you didn't create an account, you can ignore this email.",
+      "",
+      SITE_NAME,
+    ].join("\n"),
+  });
+}
 
 /** Reads a JSON request body as a plain object ({} when it isn't one). */
 export async function readJson(request: Request): Promise<Record<string, unknown>> {

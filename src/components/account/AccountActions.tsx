@@ -60,3 +60,37 @@ export function RemoveSavedButton({ slug }: { slug: string }) {
     </button>
   );
 }
+
+/** Emails a new link to confirm the account's email. */
+export function ResendVerifyButton() {
+  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const [error, setError] = useState("");
+  if (state === "sent") return <p className="mt-3 text-[15px]">Sent. Check your inbox (and spam folder) for the link.</p>;
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn-primary mt-4"
+        disabled={state === "sending"}
+        onClick={async () => {
+          setState("sending");
+          setError("");
+          try {
+            await postAccount("verify-email", {});
+            setState("sent");
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+            setState("idle");
+          }
+        }}
+      >
+        {state === "sending" ? "Sending…" : "Email Me the Link"}
+      </button>
+      {error && (
+        <p role="alert" className="mt-3 text-[15px]">
+          {error}
+        </p>
+      )}
+    </>
+  );
+}

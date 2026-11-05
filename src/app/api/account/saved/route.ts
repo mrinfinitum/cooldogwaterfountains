@@ -6,10 +6,11 @@ import { cmsPost } from "@/lib/cms";
 export async function POST(request: Request) {
   const body = await readJson(request);
   return withSession(async (session) => {
-    const saved = await cmsPost<SavedProduct[]>(`customers/${session.id}/saved`, {
-      slug: str(body.slug),
-      saved: body.saved === true,
-    });
+    const saved = await cmsPost<SavedProduct[]>(
+      `customers/${session.id}/saved`,
+      { slug: str(body.slug), saved: body.saved === true },
+      { token: session.token },
+    );
     return Response.json({ saved: saved.map((s) => s.slug) });
   });
 }

@@ -1,6 +1,7 @@
-import type { Customer } from "@/lib/account";
+import type { Customer, SignedIn } from "@/lib/account";
 import { readJson, str, withSession } from "@/lib/account-api";
 import { cmsPost } from "@/lib/cms";
+import { startSession } from "@/lib/session";
 
 const address = (value: unknown) => {
   const a = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
@@ -31,7 +32,11 @@ export async function POST(request: Request) {
       update.newPassword = body.newPassword;
       update.currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
     }
-    const customer = await cmsPost<Customer>(`customers/${session.id}`, update);
+    const { token, ...customer } = await cmsPost<Customer & Partial<SignedIn>>(`customers/${session.id}`, update, {
+      token: session.token,
+    });
+    // A new password signs out every session; this browser stays signed in with the new token.
+    if (token) await startSession({ ...customer, token });
     return Response.json({ customer });
   });
 }

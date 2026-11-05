@@ -1,5 +1,5 @@
-import type { Customer } from "@/lib/account";
-import { errorResponse, readJson, str } from "@/lib/account-api";
+import type { SignedIn } from "@/lib/account";
+import { clientIp, errorResponse, readJson, str } from "@/lib/account-api";
 import { cmsPost } from "@/lib/cms";
 import { startSession } from "@/lib/session";
 
@@ -7,10 +7,11 @@ import { startSession } from "@/lib/session";
 export async function POST(request: Request) {
   const body = await readJson(request);
   try {
-    const customer = await cmsPost<Customer>("customers/login", {
-      email: str(body.email),
-      password: typeof body.password === "string" ? body.password : "",
-    });
+    const customer = await cmsPost<SignedIn>(
+      "customers/login",
+      { email: str(body.email), password: typeof body.password === "string" ? body.password : "" },
+      { clientIp: await clientIp() },
+    );
     await startSession(customer);
     return Response.json({ signedIn: true });
   } catch (error) {
