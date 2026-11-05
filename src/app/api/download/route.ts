@@ -20,10 +20,15 @@ export async function GET(request: Request) {
     return new Response("Not found", { status: 404 });
   }
 
-  const upstream = await fetch(file, { cache: "no-store" });
-  if (!upstream.ok || !upstream.body) return new Response("Not found", { status: 404 });
+  // Never follow a redirect off the CMS.
+  const upstream = await fetch(file, { cache: "no-store", redirect: "error" }).catch(() => null);
+  if (!upstream?.ok || !upstream.body) return new Response("Not found", { status: 404 });
 
-  const name = decodeURIComponent(file.pathname.split("/").pop() || "download");
+  const raw = file.pathname.split("/").pop() || "download";
+  let name = raw;
+  try {
+    name = decodeURIComponent(raw);
+  } catch {}
   const headers = new Headers({
     "Content-Type": upstream.headers.get("content-type") || "application/octet-stream",
     "Content-Disposition": `attachment; filename="${name.replace(/[^\w.\- ]/g, "_")}"; filename*=UTF-8''${encodeURIComponent(name)}`,

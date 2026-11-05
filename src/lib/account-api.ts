@@ -16,6 +16,13 @@ export function errorResponse(error: unknown) {
   if (error instanceof CmsError && error.code.startsWith("hc_")) {
     return Response.json({ error: error.message }, { status: error.status });
   }
+  // The CMS host's own firewall throttles bursts (an HTML 429 page, no hc_ code).
+  if (error instanceof CmsError && error.status === 429) {
+    return Response.json(
+      { error: "Too many attempts. Please wait a few minutes and try again." },
+      { status: 429, headers: { "retry-after": "300" } },
+    );
+  }
   console.error("Account request failed", error);
   return Response.json(
     { error: "Something went wrong. Please try again, or call us." },
