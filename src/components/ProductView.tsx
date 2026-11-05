@@ -159,7 +159,7 @@ export default function ProductView(props: Props) {
             <Price price={price} regularPrice={regularPrice} label={props.priceLabel} size="lg" />
           </div>
 
-          {lead && <p className="mt-5 line-clamp-3 leading-relaxed text-ink/75">{lead}</p>}
+          {lead && <p className="mt-5 leading-relaxed text-ink/75">{lead}</p>}
 
           {highlights.length > 0 && (
             <ul className="mt-5 grid gap-2 text-[15px]">

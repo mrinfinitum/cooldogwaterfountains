@@ -108,6 +108,37 @@ export function highlights(html: string, count = 4, colors: string[] = []): stri
   return [...new Set(items)].slice(0, count);
 }
 
+/** Text compared ignoring tags, case, spacing and punctuation. */
+const sameText = (html: string) => plainText(html).toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/**
+ * The main description for "Details & features", minus what the product page
+ * already shows above it: the summary paragraph, the key highlights, a short
+ * "N year warranty" line and the "… sold separately" line. The CMS text is
+ * left as it is; this only changes what's rendered. A list emptied this way
+ * is dropped, with the heading right before it.
+ */
+export function withoutRepeats(
+  html: string,
+  page: { summary?: string; highlights: string[]; warranty?: string; soldSeparately?: string },
+): string {
+  const summary = page.summary ? sameText(page.summary) : "";
+  const highlighted = new Set(page.highlights.map(sameText));
+  const sold = page.soldSeparately ? sameText(page.soldSeparately) : "";
+
+  return html
+    .replace(/<p\b[^>]*>([\s\S]*?)<\/p>\s*/gi, (match, inner: string) => {
+      const text = plainText(inner);
+      const same = sameText(inner);
+      if (summary && same === summary) return "";
+      if (page.warranty && text.length < 40 && /^\W*(\d+|one|two|three|four|five|ten)[\s-]*(?:year|yr)s?\s+warranty\W*$/i.test(text)) return "";
+      if (sold && /sold separately\W*$/i.test(text) && same.startsWith(sold)) return "";
+      return match;
+    })
+    .replace(/<li\b[^>]*>([\s\S]*?)<\/li>\s*/gi, (match, inner: string) => (highlighted.has(sameText(inner)) ? "" : match))
+    .replace(/(?:<h([2-6])\b[^>]*>(?:(?!<\/?h[2-6])[\s\S])*?<\/h\1>\s*)?<(ul|ol)\b[^>]*>\s*<\/\2>\s*/gi, "");
+}
+
 /** Warranty and "sold separately" notes from a product description, for its key facts. */
 export function productFacts(html: string): { warranty?: string; soldSeparately?: string } {
   const paragraphs = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(([, inner]) => plainText(inner));
