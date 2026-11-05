@@ -390,31 +390,11 @@ body {
   }
 }
 
-/* ---- Water background ----------------------------------------------
-   Navy deepening to the logo blue, with soft light pooling from the top
-   right and a faint ripple texture (an inline SVG, no image request).
-   The left side stays darkest so white copy keeps its contrast. */
+/* ---- Blue gradient band --------------------------------------------
+   Dark navy on the left (behind the white copy) to the logo blue on the right. */
 .bg-water {
-  position: relative;
-  isolation: isolate;
   background-color: var(--color-deep);
-  background-image:
-    radial-gradient(ellipse 55% 75% at 88% 12%, rgb(56 189 240 / 0.42), transparent 62%),
-    radial-gradient(ellipse 45% 60% at 62% 105%, rgb(0 119 204 / 0.5), transparent 65%),
-    radial-gradient(ellipse 60% 90% at 0% 40%, rgb(11 36 71 / 0.85), transparent 70%),
-    linear-gradient(165deg, #0b2447 0%, #003078 48%, #0058a8 100%);
-}
-.bg-water::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.16;
-  mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='600'%3E%3Cfilter id='w' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.006 0.02' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.75 0 0 0 0 0.92 0 0 0 0 1 -2.4 0 0 0 1.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
-  /* Whole ripple periods across the tile (0.006 × 1000, 0.02 × 600), so it repeats without a seam. */
-  background-size: 1000px 600px;
+  background-image: linear-gradient(110deg, #0b2447 0%, #003078 40%, #0062b4 80%, #0077cc 100%);
 }
 
 /* ---- Motion -------------------------------------------------------- */
