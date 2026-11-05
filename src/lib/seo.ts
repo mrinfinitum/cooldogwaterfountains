@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { formatPrice } from "./format";
 import { SITE_NAME, SITE_URL, canonicalUrl } from "./site";
-import type { Page, Product } from "./content";
+import type { Page, Product, ProductPage } from "./content";
 import { shortName } from "./format";
 
 const TITLE_MAX = 60;
@@ -108,35 +108,61 @@ export function highlights(html: string, count = 4, colors: string[] = []): stri
   return [...new Set(items)].slice(0, count);
 }
 
-/** Text compared ignoring tags, case, spacing and punctuation. */
-const sameText = (html: string) => plainText(html).toLowerCase().replace(/[^a-z0-9]+/g, "");
+// Same rules as the Wash Tubs storefront (cooldogwashtubs src/lib/seo.ts), so every store treats CMS text alike.
+const sameText = (html: string) =>
+  plainText(html).toLowerCase().replace(/[.!:;,\s]+$/, "");
+
+const HEADING = /^<h[1-6]\b|^<p[^>]*>\s*<(?:b|strong)\b[^>]*>[\s\S]*?<\/(?:b|strong)>\s*(?:<(?:b|strong)\b[^>]*>\s*<\/(?:b|strong)>\s*)*<\/p>$/i;
 
 /**
- * The main description for "Details & features", minus what the product page
- * already shows above it: the summary paragraph, the key highlights, a short
+ * The description for "Details & features" without what the product page
+ * already shows from its Product page fields: the summary paragraph, bullets
+ * that are key highlights (and a heading left introducing nothing), a short
  * "N year warranty" line and the "… sold separately" line. The CMS text is
- * left as it is; this only changes what's rendered. A list emptied this way
- * is dropped, with the heading right before it.
+ * unchanged; everything else keeps its order.
  */
-export function withoutRepeats(
-  html: string,
-  page: { summary?: string; highlights: string[]; warranty?: string; soldSeparately?: string },
-): string {
+export function withoutRepeats(html: string, page: ProductPage): string {
   const summary = page.summary ? sameText(page.summary) : "";
-  const highlighted = new Set(page.highlights.map(sameText));
-  const sold = page.soldSeparately ? sameText(page.soldSeparately) : "";
-
-  return html
-    .replace(/<p\b[^>]*>([\s\S]*?)<\/p>\s*/gi, (match, inner: string) => {
-      const text = plainText(inner);
-      const same = sameText(inner);
-      if (summary && same === summary) return "";
-      if (page.warranty && text.length < 40 && /^\W*(\d+|one|two|three|four|five|ten)[\s-]*(?:year|yr)s?\s+warranty\W*$/i.test(text)) return "";
-      if (sold && /sold separately\W*$/i.test(text) && same.startsWith(sold)) return "";
-      return match;
-    })
-    .replace(/<li\b[^>]*>([\s\S]*?)<\/li>\s*/gi, (match, inner: string) => (highlighted.has(sameText(inner)) ? "" : match))
-    .replace(/(?:<h([2-6])\b[^>]*>(?:(?!<\/?h[2-6])[\s\S])*?<\/h\1>\s*)?<(ul|ol)\b[^>]*>\s*<\/\2>\s*/gi, "");
+  const shown = new Set(page.highlights.map(sameText));
+  // Top-level blocks; text between them is kept as is.
+  const blocks = html.match(/<(p|ul|ol|h[1-6])\b[^>]*>[\s\S]*?<\/\1>|[\s\S]+?(?=<(?:p|ul|ol|h[1-6])\b|$)/gi) ?? [];
+  type Block = { html: string; drop?: boolean; emptied?: boolean; heading?: boolean; intro?: boolean };
+  const out: Block[] = blocks.map((b) => {
+    const tag = b.match(/^<(\w+)/)?.[1]?.toLowerCase();
+    if (tag === "p") {
+      const text = sameText(b);
+      if (summary && text === summary) return { html: b, drop: true };
+      if (page.warranty && text.length < 40 && /^(?:\d+|one|two|three|four|five|ten)[\s-]*(?:years?|yrs?)(?:\s+limited)?\s+warranty$/.test(text))
+        return { html: b, drop: true };
+      if (page.soldSeparately && /sold separately$/.test(text)) return { html: b, drop: true };
+    }
+    if ((tag === "ul" || tag === "ol") && shown.size) {
+      const kept = b.replace(/<li\b[^>]*>([\s\S]*?)<\/li>\s*/gi, (li, inner: string) => (shown.has(sameText(inner)) ? "" : li));
+      if (!/<li\b/i.test(kept)) return { html: b, drop: true, emptied: true };
+      return { html: kept };
+    }
+    // A short line ending in ":" ("Accessory kit includes:") introduces the list after it.
+    const intro = tag === "p" && /:$/.test(plainText(b)) && plainText(b).length < 60;
+    return { html: b, heading: HEADING.test(b.trim()), intro };
+  });
+  // A heading (or intro line) whose only content was an emptied list goes too.
+  const real = (b: Block) => !b.drop && b.html.trim() !== "";
+  out.forEach((b, i) => {
+    if (b.drop) return;
+    // An intro line goes when the list right after it was emptied.
+    if (b.intro) {
+      const next = out.slice(i + 1).find((x) => x.html.trim() !== "");
+      if (next?.emptied) b.drop = true;
+      return;
+    }
+    if (!b.heading) return;
+    const after = out.slice(i + 1);
+    const next = after.findIndex(real);
+    const between = next === -1 ? after : after.slice(0, next);
+    if (!between.some((x) => x.emptied)) return;
+    if (next === -1 || after[next].heading) b.drop = true;
+  });
+  return out.filter((b) => !b.drop).map((b) => b.html).join("");
 }
 
 /** Warranty and "sold separately" notes from a product description, for its key facts. */
