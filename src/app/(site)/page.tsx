@@ -196,7 +196,7 @@ export default async function HomePage() {
       </section>
 
       {/* ---------------- Color Play ---------------- */}
-      <section className="relative overflow-hidden bg-deep text-white">
+      <section className="bg-water overflow-hidden text-white">
         <div className="mx-auto grid max-w-[1600px] items-center gap-12 px-4 py-20 lg:grid-cols-12 lg:px-8 lg:py-28">
           <div className="lg:col-span-4">
             <p className="eyebrow text-aqua">Color Play®</p>
