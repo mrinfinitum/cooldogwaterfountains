@@ -40,7 +40,7 @@ export default function PlanningList({ sheets = SHEETS }: { sheets?: Sheet[] }) 
               onClick={() => track("file_download", { file_name: s.pdf.split("/").pop(), file_extension: "pdf" })}
               aria-label={`Download ${s.title} (PDF)`}
               title="Download PDF"
-              className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center text-ink transition hover:bg-teal hover:text-white"
+              className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center text-ink transition hover:bg-brand hover:text-white"
             >
               <DownloadIcon />
             </a>

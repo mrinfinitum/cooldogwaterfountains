@@ -14,7 +14,7 @@ export default function CartButton() {
     >
       <CartIcon width={22} height={22} />
       {count > 0 && (
-        <span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-teal text-[10px] font-semibold text-white">
+        <span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-brand text-[10px] font-semibold text-white">
           {count > 9 ? "9+" : count}
         </span>
       )}

@@ -119,7 +119,7 @@ export default async function HomePage() {
             and daycares — built tough, made to keep every dog cool and hydrated.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="#products" className="btn btn-light">
+            <Link href="#products" className="btn btn-primary">
               Shop Fountains
             </Link>
             <Link

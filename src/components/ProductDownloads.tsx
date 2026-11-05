@@ -69,7 +69,7 @@ export default function ProductDownloads({ downloads }: { downloads: Download[] 
                 onClick={() => onDownload(d)}
                 aria-label={`Download ${d.label} (${meta})`}
                 title="Download"
-                className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center text-ink transition hover:bg-teal hover:text-white"
+                className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center text-ink transition hover:bg-brand hover:text-white"
               >
                 <DownloadIcon />
               </a>
