@@ -89,7 +89,7 @@ export default async function SiteFooter() {
               alt="Cool Dog Water Fountains"
               width={LOGO_LIGHT.width}
               height={LOGO_LIGHT.height}
-              sizes="180px"
+              sizes="190px"
               className="h-16 w-auto"
             />
           </Link>

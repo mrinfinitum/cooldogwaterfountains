@@ -29,17 +29,18 @@ export const CONTACT = {
   days: "Monday – Friday",
 };
 
+/** The logo (2026): transparent PNG, the dog in its deck chair beside the wordmark. */
 export const LOGO = {
-  src: "/media/dog-water-foutains-logo.png",
-  width: 791,
-  height: 285,
+  src: "/media/cool-dog-water-fountains-logo-2026.png",
+  width: 1867,
+  height: 632,
 };
 
-// White-text version for dark backgrounds.
+// The same logo with "WATER FOUNTAINS" in white, for dark backgrounds (the footer).
 export const LOGO_LIGHT = {
-  src: "/media/cooldogwaterfountains_com_logo.png",
-  width: 790,
-  height: 269,
+  src: "/media/cool-dog-water-fountains-logo-2026-light.png",
+  width: 1867,
+  height: 632,
 };
 
 export const HERO_VIDEO = "/media/hero-dog-drinking.mp4";

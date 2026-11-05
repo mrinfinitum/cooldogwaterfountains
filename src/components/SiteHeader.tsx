@@ -143,7 +143,7 @@ export default async function SiteHeader() {
             width={LOGO.width}
             height={LOGO.height}
             loading="eager"
-            sizes="(min-width: 1024px) 156px, 112px"
+            sizes="(min-width: 1024px) 168px, 120px"
             className="h-10 w-auto lg:h-14"
           />
         </Link>

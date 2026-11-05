@@ -27,7 +27,7 @@ export default async function PrintSheet({ params }: PageProps<"/print/sheet/[ke
           <h1 className="headline mt-2 text-5xl text-deep">{sheet.title}</h1>
           <p className="mt-1 text-sm text-muted">{sheet.blurb}</p>
         </div>
-        <Image src={LOGO.src} alt="Cool Dog Water Fountains" width={180} height={65} unoptimized />
+        <Image src={LOGO.src} alt="Cool Dog Water Fountains" width={180} height={Math.round((180 * LOGO.height) / LOGO.width)} unoptimized />
       </header>
       {/* Eager images: lazy ones may not load before Chrome prints. */}
       <article
