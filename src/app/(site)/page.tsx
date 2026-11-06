@@ -216,8 +216,8 @@ export default async function HomePage() {
           alt="A Great Dane drinking from a stainless steel Cool Dog fountain in front of a wall painted in the Color Play colors"
           fill
           sizes="100vw"
-          // Keep the dog and fountain (right of centre) in view as the section narrows, anchored to the bottom so the fountain base and wheels show.
-          className="-z-10 object-cover object-[80%_100%]"
+          // Keep the dog and fountain (right of centre) in view as the section narrows, set low enough that the fountain base and wheels show.
+          className="-z-10 object-cover object-[80%_75%]"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-ink/90 via-ink/60 via-50% to-transparent to-80% sm:bg-gradient-to-r sm:from-ink/90 sm:via-ink/45 sm:via-40% sm:to-transparent sm:to-70%" />
         <div className="mx-auto w-full max-w-[1600px] px-4 py-14 lg:px-8 lg:py-32">
