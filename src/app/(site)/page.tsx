@@ -157,7 +157,7 @@ export default async function HomePage() {
       <section className="grid bg-foam lg:grid-cols-2">
         <div className="relative aspect-square lg:aspect-auto lg:min-h-[640px]">
           <Image
-            src={media("dog-drinking-stainless-fountain.jpg")}
+            src={media("dog-drinking-stainless-fountain-aussie.jpg")}
             alt="A black dog at a stainless steel Cool Dog water fountain in a dog park"
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
