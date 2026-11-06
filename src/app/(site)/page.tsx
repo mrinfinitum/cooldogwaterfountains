@@ -256,7 +256,7 @@ export default async function HomePage() {
       {/* ---------------- Story banners ---------------- */}
       <section className="mx-auto grid max-w-[1600px] gap-4 px-4 py-20 md:grid-cols-2 lg:px-8 lg:py-28">
         <StoryBanner
-          href="/dog-park-designs/"
+          href="https://www.thedogparkcompany.com"
           image={media("RAMhpbanner.jpg")}
           alt="A pack of dogs on dog park agility equipment"
           eyebrow="Design & Operations"
@@ -291,9 +291,12 @@ function StoryBanner({
   title: string;
   cta: string;
 }) {
+  // Another site (The Dog Park Company) opens in a new tab, like the footer link.
+  const external = /^https?:\/\//.test(href);
   return (
     <Link
       href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className="group relative isolate flex aspect-[4/5] items-end overflow-hidden text-white sm:aspect-[4/3]"
     >
       <Image
