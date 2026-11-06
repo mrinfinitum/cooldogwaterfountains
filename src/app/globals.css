@@ -390,13 +390,6 @@ body {
   }
 }
 
-/* ---- Blue gradient band --------------------------------------------
-   Dark navy on the left (behind the white copy) to the logo blue on the right. */
-.bg-water {
-  background-color: var(--color-deep);
-  background-image: linear-gradient(110deg, #0b2447 0%, #003078 40%, #0062b4 80%, #0077cc 100%);
-}
-
 /* ---- Motion -------------------------------------------------------- */
 
 @keyframes wave-drift {
