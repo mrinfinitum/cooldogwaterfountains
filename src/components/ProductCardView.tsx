@@ -25,7 +25,8 @@ export default function ProductCardView({
   product: CardProduct;
   priority?: boolean;
 }) {
-  const [first, second] = product.images;
+  // The main photo only: no swap to a second photo on hover.
+  const [first] = product.images;
   const series = seriesOf(product.sku);
   // Color dot being hovered: the card shows the fountain in that color.
   const [preview, setPreview] = useState<ColorOption | null>(null);
@@ -60,22 +61,7 @@ export default function ProductCardView({
               loading={priority ? "eager" : undefined}
               fetchPriority={priority ? "high" : undefined}
               sizes={SIZES}
-              className={`object-contain transition duration-500 ${
-                preview?.image
-                  ? "opacity-0"
-                  : second
-                    ? "group-hover:opacity-0"
-                    : ""
-              }`}
-            />
-          )}
-          {second && !preview?.image && (
-            <Image
-              src={second.src}
-              alt=""
-              fill
-              sizes={SIZES}
-              className="object-contain opacity-0 transition duration-500 group-hover:opacity-100"
+              className={`object-contain transition duration-500 ${preview?.image ? "opacity-0" : ""}`}
             />
           )}
           {preview?.image && (
