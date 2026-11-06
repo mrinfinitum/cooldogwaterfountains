@@ -166,11 +166,12 @@ export default async function HomePage() {
       <section className="grid bg-foam lg:grid-cols-2">
         <div className="relative aspect-square lg:aspect-auto lg:min-h-[640px]">
           <Image
-            src={media("DL-2000-STE-BLU-lifestyle.jpg")}
-            alt="A greyhound drinking from a blue Cool Dog water fountain"
+            src={media("dog-drinking-stainless-fountain.jpg")}
+            alt="A black dog at a stainless steel Cool Dog water fountain in a dog park"
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
+            // The photo is wider than the slot: keep the dog's head and the fountain's spout in view.
+            className="object-cover object-[80%_50%]"
           />
         </div>
         <div className="flex items-center px-6 py-16 sm:px-12 lg:px-20">
