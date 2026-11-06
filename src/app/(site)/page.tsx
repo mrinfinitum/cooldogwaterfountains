@@ -54,15 +54,6 @@ const FEATURES = [
   },
 ];
 
-const COLOR_CHIPS = [
-  { src: "cool-dog-water-fountains-blue1-1.jpg", name: "Blue" },
-  { src: "cool-dog-water-fountains-GREEN2.jpg", name: "Green" },
-  { src: "cool-dog-water-fountains-silver2.jpg", name: "Silver" },
-  { src: "cool-dog-water-fountains-white2.jpg", name: "Bone White" },
-  { src: "cool-dog-water-fountains-spicy-mustard.jpg", name: "Spicy Mustard" },
-  { src: "cool-dog-water-fountains-SPECKLED-EARTH.jpg", name: "Speckled Earth" },
-];
-
 export default async function HomePage() {
   const products = await getProducts();
 
@@ -217,23 +208,20 @@ export default async function HomePage() {
 
       {/* ---------------- Color Play ---------------- */}
       {/* The photo (a dog at a fountain in front of a wall painted in every Color Play
-          colour) fills the band, with the copy over its darkened left side on desktop
-          and below it on phones; the colour chips follow in one row. */}
-      <section className="overflow-hidden bg-ink text-white">
-        <div className="relative isolate lg:min-h-[640px]">
-          <div className="relative aspect-[16/10] lg:absolute lg:inset-0 lg:-z-10 lg:aspect-auto">
-            <Image
-              src={media("color-play-graffiti-fountain.jpg")}
-              alt="A Great Dane drinking from a stainless steel Cool Dog fountain in front of a wall painted in the Color Play colors"
-              fill
-              sizes="100vw"
-              // Keep the dog and fountain (right of centre) in view as the band narrows.
-              className="object-cover object-[78%_50%]"
-            />
-            <div className="absolute inset-0 hidden bg-gradient-to-r from-ink/85 via-ink/40 via-45% to-transparent to-70% lg:block" />
-          </div>
-          <div className="mx-auto max-w-[1600px] px-4 py-14 lg:px-8 lg:py-32">
-            <div className="max-w-xl">
+          colour) is the whole section's background. A dark fade from the left (from the
+          top on phones, where the copy covers more of the photo) keeps the copy readable. */}
+      <section className="relative isolate flex min-h-[640px] items-start overflow-hidden bg-ink text-white sm:items-center lg:min-h-[680px]">
+        <Image
+          src={media("color-play-graffiti-fountain.jpg")}
+          alt="A Great Dane drinking from a stainless steel Cool Dog fountain in front of a wall painted in the Color Play colors"
+          fill
+          sizes="100vw"
+          // Keep the dog and fountain (right of centre) in view as the section narrows.
+          className="-z-10 object-cover object-[80%_50%]"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-ink/90 via-ink/60 via-50% to-transparent to-80% sm:bg-gradient-to-r sm:from-ink/90 sm:via-ink/45 sm:via-40% sm:to-transparent sm:to-70%" />
+        <div className="mx-auto w-full max-w-[1600px] px-4 py-14 lg:px-8 lg:py-32">
+          <div className="max-w-xl">
               <p className="eyebrow text-aqua">Color Play®</p>
               <h2 className="headline mt-4 text-6xl lg:text-8xl">Make a splash</h2>
               <p className="mt-6 text-lg text-white/85">
@@ -243,27 +231,6 @@ export default async function HomePage() {
               <SheetButton sheet="colors" className="btn btn-light mt-8">
                 See All Colors
               </SheetButton>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-2 lg:px-8 lg:pt-14">
-          <div className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 lg:mx-0 lg:grid lg:grid-cols-6 lg:gap-6 lg:overflow-visible lg:px-0">
-            {COLOR_CHIPS.map((chip) => (
-              <figure key={chip.src} className="w-36 shrink-0 snap-start lg:w-auto">
-                <div className="relative aspect-[1406/1772] overflow-hidden shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)]">
-                  <Image
-                    src={media(chip.src)}
-                    alt={`${chip.name} color chip`}
-                    fill
-                    sizes="200px"
-                    className="object-cover"
-                  />
-                </div>
-                <figcaption className="eyebrow mt-3 text-[10px] text-aqua-light">
-                  {chip.name}
-                </figcaption>
-              </figure>
-            ))}
           </div>
         </div>
       </section>
