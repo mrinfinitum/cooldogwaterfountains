@@ -225,8 +225,14 @@ export default async function HomePage() {
               <p className="eyebrow text-aqua">Color Play®</p>
               <h2 className="headline mt-4 text-6xl lg:text-8xl">Make a splash</h2>
               <p className="mt-6 text-lg text-white/85">
-                Cool Dog fountains come in a range of cool colors to fit your dog play space or your
-                brand — and we offer custom colors too.
+                Cool Dog fountains come in six standard Color Play® finishes — Blue, Green, Silver,
+                Bone White, Spicy Mustard and Speckled Earth — so they can blend into your park or
+                stand out as part of your brand.
+              </p>
+              <p className="mt-4 text-white/85">
+                Heavy-duty stainless steel and high-quality outdoor powder coatings keep them looking
+                great season after season. Need something specific? We&apos;ll match a custom color
+                to your brand or design.
               </p>
               <SheetButton sheet="colors" className="btn btn-light mt-8">
                 See All Colors
